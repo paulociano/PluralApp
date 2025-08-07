@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { DebateService } from './debate.service';
 import { CreateArgumentDto } from './dto/create-argument.dto';
 import { CreateVoteDto } from './dto/create-vote.dto';
 import express from 'express';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @Controller('debate')
 export class DebateController {
@@ -25,8 +27,11 @@ export class DebateController {
 
   // ROTA PÚBLICA: Pega a árvore de argumentos de um tópico específico
   @Get('tree/:topicId')
-  getArgumentTree(@Param('topicId') topicId: string) {
-    return this.debateService.getArgumentTreeForTopic(topicId);
+  getArgumentTree(
+    @Param('topicId') topicId: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.debateService.getArgumentTreeForTopic(topicId, paginationDto);
   }
 
   // ROTA PROTEGIDA: Cria um novo argumento (requer login)
