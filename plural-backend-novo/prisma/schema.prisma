@@ -1,0 +1,66 @@
+// Arquivo: prisma/schema.prisma
+// Versão Final Verificada
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  arguments Argument[]
+  votes     Vote[]
+}
+
+model Topic {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime   @default(now())
+  arguments   Argument[]
+}
+
+model Argument {
+  id               String     @id @default(cuid())
+  content          String
+  type             ArgType
+  createdAt        DateTime   @default(now())
+  votesCount       Int        @default(0)
+  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId         String
+  topic            Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId          String
+  parentArgument   Argument?  @relation("Replies", fields: [parentArgumentId], references: [id], onDelete: SetNull)
+  parentArgumentId String?
+  replies          Argument[] @relation("Replies")
+  votes            Vote[]
+}
+
+model Vote {
+  id         String   @id @default(cuid())
+  type       VoteType
+  userId     String
+  argumentId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  argument   Argument @relation(fields: [argumentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, argumentId])
+}
+
+enum ArgType {
+  PRO
+  CONTRA
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}

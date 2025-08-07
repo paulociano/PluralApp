@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  postgres_db:
+    image: postgres:14
+    container_name: plural_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: plural_user
+      POSTGRES_PASSWORD: strong_password
+      POSTGRES_DB: plural_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  neo4j_db:
+    image: neo4j:4.4
+    container_name: plural_neo4j
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/strong_password
+    ports:
+      - '7474:7474' # HTTP
+      - '7687:7687' # Bolt
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  postgres_data:
+  neo4j_data:
