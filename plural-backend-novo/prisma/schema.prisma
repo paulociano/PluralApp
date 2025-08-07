@@ -20,6 +20,7 @@ model User {
   votes     Vote[]
   notifications Notification[] @relation("Recipient") // Notificações recebidas
   triggered     Notification[] @relation("Trigger")   // Notificações que este usuário causou
+  reportsMade   Report[] @relation("Reporter") // Denúncias que o usuário fez
 }
 
 model Topic {
@@ -45,6 +46,7 @@ model Argument {
   parentArgumentId String?
   replies          Argument[] @relation("Replies")
   votes            Vote[]
+  reports          Report[]   @relation("ReportedArgument")
 }
 
 model Vote {
@@ -76,6 +78,25 @@ model Notification {
   originArgumentId String
 }
 
+model Report {
+  id                  String       @id @default(cuid())
+  reason              ReportReason
+  notes               String?
+  status              ReportStatus @default(PENDING)
+  createdAt           DateTime     @default(now())
+
+  // Relação com quem denunciou
+  reporter   User   @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId String
+
+  // Relação com o argumento denunciado
+  reportedArgument   Argument @relation("ReportedArgument", fields: [reportedArgumentId], references: [id], onDelete: Cascade)
+  reportedArgumentId String
+
+  // Garante que um usuário não pode denunciar o mesmo argumento múltiplas vezes
+  @@unique([reporterId, reportedArgumentId])
+}
+
 enum ArgType {
   PRO
   CONTRA
@@ -88,4 +109,17 @@ enum VoteType {
 
 enum NotificationType {
   NEW_REPLY
+}
+
+enum ReportReason {
+  SPAM
+  OFFENSIVE
+  DISINFORMATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
 }
