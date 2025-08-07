@@ -1,21 +1,48 @@
 // Arquivo: src/debate/debate.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateArgumentDto } from './dto/create-argument.dto';
-import { ArgType, VoteType } from '@prisma/client';
+import { VoteType } from '@prisma/client';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { EditArgumentDto } from './dto/edit-argument.dto';
 
 @Injectable()
 export class DebateService {
   constructor(private prisma: PrismaService) {}
 
-  createArgument(userId: string, dto: CreateArgumentDto) {
-    return this.prisma.argument.create({
-      data: {
-        authorId: userId,
-        ...dto,
-      },
-    });
+  async createArgument(userId: string, dto: CreateArgumentDto) {
+    // Se o argumento tem um pai (é uma resposta), precisamos atualizar a contagem de respostas do pai
+    if (dto.parentArgumentId) {
+      return this.prisma.$transaction(async (tx) => {
+        // 1. Cria o novo argumento (a resposta)
+        const newReply = await tx.argument.create({
+          data: {
+            authorId: userId,
+            ...dto,
+          },
+        });
+
+        // 2. Atualiza a contagem de respostas do argumento pai
+        await tx.argument.update({
+          where: { id: dto.parentArgumentId },
+          data: { replyCount: { increment: 1 } },
+        });
+
+        return newReply;
+      });
+    } else {
+      // Se for um argumento raiz, apenas o criamos
+      return this.prisma.argument.create({
+        data: {
+          authorId: userId,
+          ...dto,
+        },
+      });
+    }
   }
 
   async findOrCreateFeaturedTopic() {
@@ -37,7 +64,9 @@ export class DebateService {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const topicExists = await this.prisma.topic.findUnique({ where: { id: topicId } });
+    const topicExists = await this.prisma.topic.findUnique({
+      where: { id: topicId },
+    });
     if (!topicExists) {
       throw new NotFoundException('Tópico não encontrado.');
     }
@@ -59,6 +88,7 @@ export class DebateService {
         include: { author: { select: { name: true, id: true } } },
       });
       for (const reply of replies) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (reply as any).replies = await getRepliesRecursively(reply.id);
       }
       return replies;
@@ -81,7 +111,7 @@ export class DebateService {
       page: page,
       lastPage: Math.ceil(totalRootArguments / limit),
     };
-}
+  }
 
   async voteOnArgument(userId: string, argumentId: string, type: VoteType) {
     const argument = await this.prisma.argument.findUnique({
@@ -128,5 +158,96 @@ export class DebateService {
         return { message: 'Voto registrado.' };
       }
     });
+  }
+
+  async editArgument(userId: string, argumentId: string, dto: EditArgumentDto) {
+    // 1. Busca o argumento no banco de dados
+    const argument = await this.prisma.argument.findUnique({
+      where: { id: argumentId },
+    });
+
+    // 2. Verifica se o argumento existe
+    if (!argument) {
+      throw new NotFoundException('Argumento não encontrado.');
+    }
+
+    // 3. VERIFICAÇÃO DE POSSE (A LÓGICA DE AUTORIZAÇÃO)
+    if (argument.authorId !== userId) {
+      throw new ForbiddenException(
+        'Acesso negado. Você não é o autor deste argumento.',
+      );
+    }
+
+    // 4. Se tudo estiver certo, atualiza o argumento
+    return this.prisma.argument.update({
+      where: { id: argumentId },
+      data: { ...dto },
+    });
+  }
+
+  async deleteArgument(userId: string, argumentId: string) {
+    const argument = await this.prisma.argument.findUnique({
+      where: { id: argumentId },
+    });
+
+    if (!argument) {
+      throw new NotFoundException('Argumento não encontrado.');
+    }
+
+    if (argument.authorId !== userId) {
+      throw new ForbiddenException(
+        'Acesso negado. Você não é o autor deste argumento.',
+      );
+    }
+
+    // Se o argumento que está sendo deletado era uma resposta,
+    // precisamos decrementar a contagem do pai.
+    if (argument.parentArgumentId) {
+      await this.prisma.argument.update({
+        where: { id: argument.parentArgumentId },
+        data: { replyCount: { decrement: 1 } },
+      });
+    }
+
+    // Agora, deleta o argumento (e suas respostas, graças ao onDelete: Cascade)
+    await this.prisma.argument.delete({
+      where: { id: argumentId },
+    });
+
+    return { message: 'Argumento deletado com sucesso.' };
+  }
+
+  // Dentro da classe DebateService...
+
+  async getArgumentById(argumentId: string) {
+    const argument = await this.prisma.argument.findUnique({
+      where: { id: argumentId },
+      include: {
+        // Inclui os dados do autor para mostrar quem escreveu
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        // Inclui as respostas diretas (primeiro nível de replies)
+        replies: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!argument) {
+      throw new NotFoundException('Argumento não encontrado.');
+    }
+
+    return argument;
   }
 }

@@ -1,57 +1,64 @@
+// Arquivo: src/debate/controller.ts
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
+  Patch,
   Post,
-  Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { GetUser } from '../auth/decorator/get-user.decorator';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { DebateService } from './debate.service';
 import { CreateArgumentDto } from './dto/create-argument.dto';
-import { CreateVoteDto } from './dto/create-vote.dto';
-import express from 'express';
-import { PaginationDto } from '@/common/dto/pagination.dto';
-
+import { EditArgumentDto } from './dto/edit-argument.dto';
 @Controller('debate')
 export class DebateController {
   constructor(private debateService: DebateService) {}
 
-  // ROTA PÚBLICA: Pega o tópico em destaque
   @Get('featured-topic')
   getFeaturedTopic() {
     return this.debateService.findOrCreateFeaturedTopic();
   }
 
-  // ROTA PÚBLICA: Pega a árvore de argumentos de um tópico específico
   @Get('tree/:topicId')
-  getArgumentTree(
-    @Param('topicId') topicId: string,
-    @Query() paginationDto: PaginationDto,
-  ) {
-    return this.debateService.getArgumentTreeForTopic(topicId, paginationDto);
+  getArgumentTree(@Param('topicId') topicId: string) {
+    return this.debateService.getArgumentTreeForTopic(topicId, {
+      page: 1,
+      limit: 10,
+    }); // Ajustado para passar valores padrão
   }
 
-  // ROTA PROTEGIDA: Cria um novo argumento (requer login)
   @UseGuards(JwtGuard)
   @Post('argument')
-  createArgument(@Body() dto: CreateArgumentDto, @Req() req: express.Request) {
-    // A anotação de tipo aqui ajuda o TypeScript e o autocomplete
-    const user = req.user as { id: string; email: string };
+  createArgument(@Body() dto: CreateArgumentDto, @GetUser() user: User) {
     return this.debateService.createArgument(user.id, dto);
   }
 
-  // NOVA ROTA PROTEGIDA PARA VOTOS
   @UseGuards(JwtGuard)
-  @Post('argument/:argumentId/vote')
-  voteOnArgument(
-    @Param('argumentId') argumentId: string,
-    @Body() dto: CreateVoteDto,
-    @Req() req: express.Request,
+  @Patch('argument/:id')
+  editArgument(
+    @Param('id') argumentId: string,
+    @Body() dto: EditArgumentDto,
+    @GetUser() user: User,
   ) {
-    const user = req.user as { id: string };
-    return this.debateService.voteOnArgument(user.id, argumentId, dto.type);
+    return this.debateService.editArgument(user.id, argumentId, dto);
+  }
+
+  @UseGuards(JwtGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('argument/:id')
+  deleteArgument(@Param('id') argumentId: string, @GetUser() user: User) {
+    return this.debateService.deleteArgument(user.id, argumentId);
+  }
+
+  @Get('argument/:id')
+  getArgumentById(@Param('id') argumentId: string) {
+    return this.debateService.getArgumentById(argumentId);
   }
 }
