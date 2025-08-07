@@ -1,6 +1,6 @@
 // Arquivo: src/app/page.tsx
 'use client';
-
+import DebateGraph from '@/components/DebateGraph';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import ArgumentCard from '@/components/ArgumentCard'; // Importa nosso novo componente
@@ -43,42 +43,21 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-4 sm:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Cabeçalho com o Título do Tópico */}
+      <div className="max-w-7xl mx-auto">
         {topic && (
-          <header className="mb-8 p-6 bg-white rounded-lg shadow">
+          <header className="mb-8 p-6 bg-white rounded-lg shadow text-center">
             <h1 className="text-4xl font-bold text-gray-900">{topic.title}</h1>
           </header>
         )}
 
-        {/* Exibição da Árvore de Argumentos */}
         {error && <p className="text-red-500">{error}</p>}
         {!topic && !error && <p>Carregando debate...</p>}
 
-        {argumentsTree.map((argument) => (
-          <ArgumentCard key={argument.id} argument={argument} />
-        ))}
-
-        {/* Controles de Paginação */}
-        <div className="flex justify-between items-center mt-8">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-          >
-            Página Anterior
-          </button>
-          <span className="text-gray-700">
-            Página {currentPage} de {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-          >
-            Próxima Página
-          </button>
+        {/* AQUI ESTÁ A MUDANÇA PRINCIPAL */}
+        <div className="bg-white rounded-lg shadow">
+          <DebateGraph argumentsTree={argumentsTree} />
         </div>
+
       </div>
     </main>
   );
