@@ -18,6 +18,8 @@ model User {
   createdAt DateTime @default(now())
   arguments Argument[]
   votes     Vote[]
+  notifications Notification[] @relation("Recipient") // Notificações recebidas
+  triggered     Notification[] @relation("Trigger")   // Notificações que este usuário causou
 }
 
 model Topic {
@@ -56,6 +58,24 @@ model Vote {
   @@unique([userId, argumentId])
 }
 
+model Notification {
+  id                String           @id @default(cuid())
+  type              NotificationType
+  isRead            Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+
+  // Quem recebe a notificação
+  recipient   User   @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+
+  // Quem causou a notificação
+  triggerUser   User   @relation("Trigger", fields: [triggerUserId], references: [id], onDelete: Cascade)
+  triggerUserId String
+
+  // O argumento original que recebeu a resposta
+  originArgumentId String
+}
+
 enum ArgType {
   PRO
   CONTRA
@@ -64,4 +84,8 @@ enum ArgType {
 enum VoteType {
   UPVOTE
   DOWNVOTE
+}
+
+enum NotificationType {
+  NEW_REPLY
 }

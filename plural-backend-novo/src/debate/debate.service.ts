@@ -14,33 +14,43 @@ import { EditArgumentDto } from './dto/edit-argument.dto';
 export class DebateService {
   constructor(private prisma: PrismaService) {}
 
+  // Dentro da classe DebateService...
+
   async createArgument(userId: string, dto: CreateArgumentDto) {
-    // Se o argumento tem um pai (é uma resposta), precisamos atualizar a contagem de respostas do pai
     if (dto.parentArgumentId) {
       return this.prisma.$transaction(async (tx) => {
-        // 1. Cria o novo argumento (a resposta)
         const newReply = await tx.argument.create({
-          data: {
-            authorId: userId,
-            ...dto,
-          },
+          data: { authorId: userId, ...dto },
         });
 
-        // 2. Atualiza a contagem de respostas do argumento pai
         await tx.argument.update({
           where: { id: dto.parentArgumentId },
           data: { replyCount: { increment: 1 } },
         });
 
+        // LÓGICA DE NOTIFICAÇÃO
+        const parentArgument = await tx.argument.findUnique({
+          where: { id: dto.parentArgumentId },
+        });
+
+        // Só cria notificação se o autor da resposta for diferente do autor do argumento pai
+        if (parentArgument && parentArgument.authorId !== userId) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          await tx.notification.create({
+            data: {
+              type: 'NEW_REPLY',
+              recipientId: parentArgument.authorId,
+              triggerUserId: userId,
+              originArgumentId: parentArgument.id,
+            },
+          });
+        }
+
         return newReply;
       });
     } else {
-      // Se for um argumento raiz, apenas o criamos
       return this.prisma.argument.create({
-        data: {
-          authorId: userId,
-          ...dto,
-        },
+        data: { authorId: userId, ...dto },
       });
     }
   }
