@@ -1,6 +1,4 @@
 // Arquivo: src/debate/debate.controller.ts
-// Versão completa e final
-
 import {
   Body,
   Controller,
@@ -13,8 +11,9 @@ import {
   Post,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, VoteType } from '@prisma/client';
 import { GetUser } from '@/auth/decorator/get-user.decorator';
 import { JwtGuard } from '@/auth/guard/jwt.guard';
 import { DebateService } from './debate.service';
@@ -22,9 +21,11 @@ import {
   CreateArgumentDto,
   EditArgumentDto,
   CreateReportDto,
-} from './dto/index';
+  CreateVoteDto,
+} from './dto';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { ReportsService } from '@/reports/reports.service';
+import { Request } from 'express';
 
 @Controller('debate')
 export class DebateController {
@@ -33,13 +34,21 @@ export class DebateController {
     private reportsService: ReportsService,
   ) {}
 
-  // ROTA PÚBLICA: Pega o tópico em destaque
+  @Get('topics')
+  getAllTopics() {
+    return this.debateService.getAllTopics();
+  }
+
+  @Get('topic/:id')
+  getTopicById(@Param('id') topicId: string) {
+    return this.debateService.getTopicById(topicId);
+  }
+
   @Get('featured-topic')
   getFeaturedTopic() {
     return this.debateService.findOrCreateFeaturedTopic();
   }
 
-  // ROTA PÚBLICA: Pega a árvore de argumentos de um tópico específico com paginação
   @Get('tree/:topicId')
   getArgumentTree(
     @Param('topicId') topicId: string,
@@ -48,20 +57,17 @@ export class DebateController {
     return this.debateService.getArgumentTreeForTopic(topicId, paginationDto);
   }
 
-  // ROTA PÚBLICA: Pega um único argumento por ID
   @Get('argument/:id')
   getArgumentById(@Param('id') argumentId: string) {
     return this.debateService.getArgumentById(argumentId);
   }
 
-  // ROTA PROTEGIDA: Cria um novo argumento (requer login)
   @UseGuards(JwtGuard)
   @Post('argument')
   createArgument(@Body() dto: CreateArgumentDto, @GetUser() user: User) {
     return this.debateService.createArgument(user.id, dto);
   }
 
-  // ROTA PROTEGIDA: Edita um argumento existente
   @UseGuards(JwtGuard)
   @Patch('argument/:id')
   editArgument(
@@ -72,7 +78,6 @@ export class DebateController {
     return this.debateService.editArgument(userId, argumentId, dto);
   }
 
-  // ROTA PROTEGIDA: Deleta um argumento existente
   @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('argument/:id')
@@ -83,19 +88,16 @@ export class DebateController {
     return this.debateService.deleteArgument(userId, argumentId);
   }
 
-  // ROTA PROTEGIDA: Registra um voto em um argumento
   @UseGuards(JwtGuard)
   @Post('argument/:argumentId/vote')
   voteOnArgument(
     @Param('argumentId') argumentId: string,
-    @Body() dto: any, // Ajuste para o DTO de Voto se o tiver criado
+    @Body() dto: CreateVoteDto,
     @GetUser('id') userId: string,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     return this.debateService.voteOnArgument(userId, argumentId, dto.type);
   }
 
-  // ROTA PROTEGIDA: Cria uma denúncia para um argumento
   @UseGuards(JwtGuard)
   @Post('argument/:id/report')
   reportArgument(
@@ -110,14 +112,10 @@ export class DebateController {
     );
   }
 
-  // ROTA PÚBLICA: Pega todos os tópicos
-  @Get('topics')
-  getAllTopics() {
-    return this.debateService.getAllTopics();
-  }
-  // ROTA PÚBLICA: Pega um único tópico por ID
-  @Get('topic/:id')
-  getTopicById(@Param('id') topicId: string) {
-    return this.debateService.getTopicById(topicId);
+  @UseGuards(JwtGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('topic/:id')
+  deleteTopic(@Param('id') topicId: string) {
+    return this.debateService.deleteTopic(topicId);
   }
 }

@@ -1,22 +1,20 @@
-// src/auth/auth.controller.ts
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto/auth.dto';
+import { SignupDto } from './dto/signup.dto'; // Importa o DTO de cadastro
+import { LoginDto } from './dto/login.dto'; // Importa o DTO de login
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // Rota: POST /auth/signup
   @Post('signup')
-  signup(@Body() dto: AuthDto) {
+  signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
 
-  // Rota: POST /auth/signin
   @HttpCode(HttpStatus.OK)
   @Post('signin')
-  signin(@Body() dto: AuthDto) {
+  signin(@Body() dto: LoginDto) {
     return this.authService.signin(dto);
   }
 }

@@ -9,7 +9,7 @@ export default function LayoutManager({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   // Lista de rotas onde o Header NÃO deve aparecer
-  const noHeaderRoutes = ['/login'];
+  const noHeaderRoutes = ['/login', '/signup'];
 
   const showHeader = !noHeaderRoutes.includes(pathname);
 

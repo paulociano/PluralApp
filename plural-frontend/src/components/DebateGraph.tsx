@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -5,15 +6,25 @@ import * as d3 from 'd3';
 import ArgumentModal from './ArgumentModal';
 
 // Tipos
-type ArgumentData = { id: string; content: string; author: { name: string }; votesCount: number; replyCount: number; parentArgumentId: string | null; topicId: string; replies?: ArgumentData[] };
+type ArgumentData = {
+  id: string;
+  content: string;
+  author: { id: string; name: string }; // <-- CORREÇÃO APLICADA AQUI
+  votesCount: number;
+  replyCount: number;
+  parentArgumentId: string | null;
+  topicId: string;
+  type: 'PRO' | 'CONTRA';
+  replies?: ArgumentData[];
+};
 type Node = { id: string; content: string; votesCount: number; data: ArgumentData };
 type Link = { source: string; target: string };
 type DebateGraphProps = { argumentsTree: ArgumentData[]; onReplySuccess: () => void };
 
-// CORREÇÃO 1: O objeto de cores é definido aqui fora, uma única vez.
 const colors = {
   rootArgument: '#2D4F5A',
   replyArgument: '#63A6A0',
+  replyArgumentContra: '#E57373',
   connector: '#B0B0B0',
 };
 
@@ -70,7 +81,12 @@ export default function DebateGraph({ argumentsTree, onReplySuccess }: DebateGra
       .data(nodes)
       .join('circle')
       .attr('r', (d) => Math.max(10, 10 + d.votesCount * 3))
-      .attr('fill', (d) => (d.data.parentArgumentId ? colors.replyArgument : colors.rootArgument))
+      .attr('fill', (d) => {
+        if (!d.data.parentArgumentId) {
+          return colors.rootArgument;
+        }
+        return d.data.type === 'CONTRA' ? colors.replyArgumentContra : colors.replyArgument;
+      })
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         handleNodeClick(d.data);
@@ -86,7 +102,7 @@ export default function DebateGraph({ argumentsTree, onReplySuccess }: DebateGra
         .attr('y2', (d: any) => d.target.y);
       node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
     });
-  }, [argumentsTree]); // CORREÇÃO 2: O array de dependências agora só contém o que realmente muda.
+  }, [argumentsTree]);
 
   return (
     <div className="flex justify-center items-center w-full">
