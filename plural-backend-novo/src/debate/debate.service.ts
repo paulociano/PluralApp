@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // Arquivo: src/debate/debate.service.ts
 import {
   ForbiddenException,
@@ -6,15 +8,40 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateArgumentDto, EditArgumentDto } from './dto';
-import { VoteType } from '@prisma/client';
+import { Prisma, TopicCategory, VoteType } from '@prisma/client';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @Injectable()
 export class DebateService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllTopics() {
+  async getAllTopics(category?: TopicCategory, search?: string) {
+    const where: Prisma.TopicWhereInput = {}; // Cria um objeto de filtro
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (search) {
+      where.OR = [
+        // Procura a palavra-chave no título OU na descrição
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive', // Ignora maiúsculas/minúsculas
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
     return this.prisma.topic.findMany({
+      where, // Aplica os filtros construídos
       orderBy: {
         createdAt: 'desc',
       },

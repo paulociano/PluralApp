@@ -11,7 +11,6 @@ import {
   Post,
   Query,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { User, VoteType } from '@prisma/client';
 import { GetUser } from '@/auth/decorator/get-user.decorator';
@@ -26,6 +25,7 @@ import {
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { ReportsService } from '@/reports/reports.service';
 import { Request } from 'express';
+import { GetTopicsDto } from './dto/get-topics.dto';
 
 @Controller('debate')
 export class DebateController {
@@ -35,8 +35,8 @@ export class DebateController {
   ) {}
 
   @Get('topics')
-  getAllTopics() {
-    return this.debateService.getAllTopics();
+  getAllTopics(@Query() dto: GetTopicsDto) {
+    return this.debateService.getAllTopics(dto.category, dto.search); // Passa os dois parâmetros
   }
 
   @Get('topic/:id')

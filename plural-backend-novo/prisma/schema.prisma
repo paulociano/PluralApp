@@ -24,10 +24,11 @@ model User {
 }
 
 model Topic {
-  id          String     @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   description String
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime       @default(now())
+  category    TopicCategory?
   arguments   Argument[]
 }
 
@@ -122,4 +123,14 @@ enum ReportStatus {
   PENDING
   RESOLVED
   DISMISSED
+}
+
+enum TopicCategory {
+  TECNOLOGIA
+  SOCIEDADE
+  CULTURA
+  POLITICA
+  MEIO_AMBIENTE
+  CIENCIA
+  OUTRO
 }
