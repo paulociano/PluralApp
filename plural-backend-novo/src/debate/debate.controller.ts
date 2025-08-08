@@ -49,6 +49,11 @@ export class DebateController {
     return this.debateService.findOrCreateFeaturedTopic();
   }
 
+  @Get('trending')
+  getTrendingTopics() {
+    return this.debateService.getTrendingTopics();
+  }
+
   @Get('tree/:topicId')
   getArgumentTree(
     @Param('topicId') topicId: string,

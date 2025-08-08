@@ -101,6 +101,7 @@ model Report {
 enum ArgType {
   PRO
   CONTRA
+  NEUTRO
 }
 
 enum VoteType {
