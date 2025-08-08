@@ -1,68 +1,86 @@
-// Arquivo: src/context/AuthContext.tsx
+
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
-// Tipos para nosso contexto
 type User = { id: string; email: string; name: string; };
 type AuthContextType = {
   user: User | null;
   token: string | null;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
-// Criamos o contexto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Criamos o "Provedor" do contexto
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Estado para saber se estamos verificando o login
   const router = useRouter();
 
+  // NOVO useEffect: Roda uma vez quando o app carrega
+  useEffect(() => {
+    const loadUserFromStorage = async () => {
+      const storedToken = localStorage.getItem('plural_token');
+      if (storedToken) {
+        setToken(storedToken);
+        try {
+          // Com o token, buscamos os dados do usuário para confirmar que é válido
+          const userResponse = await axios.get('http://localhost:3000/users/me', {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+          setUser(userResponse.data);
+        } catch (error) {
+          // Se o token for inválido, limpa tudo
+          console.error('Sessão inválida, limpando token.', error);
+          localStorage.removeItem('plural_token');
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setIsLoading(false); // Finaliza o carregamento inicial
+    };
+    loadUserFromStorage();
+  }, []);
+
   const login = async (email, password) => {
+    // ... (o resto da função de login continua igual)
     try {
-      const response = await axios.post('http://localhost:3000/auth/signin', {
-        email,
-        password,
-      });
+      const response = await axios.post('http://localhost:3000/auth/signin', { email, password });
       const { access_token } = response.data;
       setToken(access_token);
-
-      // Guardamos o token no localStorage para manter o login após recarregar a página
       localStorage.setItem('plural_token', access_token);
-
-      // Buscamos os dados do usuário com o novo token
       const userResponse = await axios.get('http://localhost:3000/users/me', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
       setUser(userResponse.data);
-
-      router.push('/'); // Redireciona para a home após o login
+      router.push('/');
     } catch (error) {
       console.error('Falha no login', error);
-      // Adicionar lógica para mostrar erro para o usuário
+      throw error;
     }
   };
 
   const logout = () => {
+    // ... (a função de logout continua igual)
     setUser(null);
     setToken(null);
     localStorage.removeItem('plural_token');
     router.push('/login');
   };
 
+  // Passamos isLoading para que outros componentes saibam que estamos verificando o login
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Criamos um "hook" customizado para facilitar o uso do contexto
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

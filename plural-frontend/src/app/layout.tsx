@@ -1,8 +1,9 @@
+// Arquivo: src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "../context/AuthContext";
-import Header from "@/components/Header";
+import { AuthProvider } from "@/context/AuthContext";
+import  LayoutManager from "@/components/LayoutManager";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,8 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <Header /> {/* <-- ADICIONE O HEADER AQUI */}
-          <main>{children}</main> {/* Envolvemos o children com <main> para semântica */}
+          <LayoutManager>{children}</LayoutManager>
         </AuthProvider>
       </body>
     </html>

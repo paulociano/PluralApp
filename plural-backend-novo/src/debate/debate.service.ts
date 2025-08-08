@@ -35,7 +35,6 @@ export class DebateService {
 
         // Só cria notificação se o autor da resposta for diferente do autor do argumento pai
         if (parentArgument && parentArgument.authorId !== userId) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           await tx.notification.create({
             data: {
               type: 'NEW_REPLY',
@@ -227,7 +226,24 @@ export class DebateService {
     return { message: 'Argumento deletado com sucesso.' };
   }
 
-  // Dentro da classe DebateService...
+  async getAllTopics() {
+    return this.prisma.topic.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async getTopicById(topicId: string) {
+    const topic = await this.prisma.topic.findUnique({
+      where: { id: topicId },
+    });
+
+    if (!topic) {
+      throw new NotFoundException('Tópico não encontrado.');
+    }
+    return topic;
+  }
 
   async getArgumentById(argumentId: string) {
     const argument = await this.prisma.argument.findUnique({

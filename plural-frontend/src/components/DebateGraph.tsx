@@ -1,32 +1,45 @@
-// Arquivo: src/components/DebateGraph.tsx
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import ArgumentModal from './ArgumentModal';
 
-// Tipos para os dados que o D3 vai usar
-type Node = { id: string; content: string; votesCount: number; data: any };
+// Tipos
+type ArgumentData = { id: string; content: string; author: { name: string }; votesCount: number; replyCount: number; parentArgumentId: string | null; topicId: string; replies?: ArgumentData[] };
+type Node = { id: string; content: string; votesCount: number; data: ArgumentData };
 type Link = { source: string; target: string };
-type GraphData = { nodes: Node[]; links: Link[] };
+type DebateGraphProps = { argumentsTree: ArgumentData[]; onReplySuccess: () => void };
 
-type DebateGraphProps = {
-  argumentsTree: any[]; // Os dados que vêm da nossa API
+// CORREÇÃO 1: O objeto de cores é definido aqui fora, uma única vez.
+const colors = {
+  rootArgument: '#2D4F5A',
+  replyArgument: '#63A6A0',
+  connector: '#B0B0B0',
 };
 
-export default function DebateGraph({ argumentsTree }: DebateGraphProps) {
-  // useRef nos dá uma referência a um elemento do DOM (nosso SVG)
+export default function DebateGraph({ argumentsTree, onReplySuccess }: DebateGraphProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [selectedArgument, setSelectedArgument] = useState<ArgumentData | null>(null);
 
-  // useEffect é onde a mágica do D3 acontece, depois que o componente é montado
+  const handleNodeClick = (argumentData: ArgumentData) => {
+    setSelectedArgument(argumentData);
+  };
+
+  const closeModal = () => {
+    setSelectedArgument(null);
+  };
+
   useEffect(() => {
-    if (!argumentsTree || argumentsTree.length === 0 || !svgRef.current) return;
+    if (!argumentsTree || argumentsTree.length === 0 || !svgRef.current) {
+      d3.select(svgRef.current).selectAll('*').remove();
+      return;
+    }
 
-    // 1. PREPARAÇÃO DOS DADOS: Transformamos nossa árvore de argumentos
-    // no formato que o D3 entende (nodes e links).
     const nodes: Node[] = [];
     const links: Link[] = [];
-    function flattenTree(args: any[]) {
-      args.forEach(arg => {
+    const flattenTree = (args: ArgumentData[]) => {
+      if (!Array.isArray(args)) return;
+      args.forEach((arg) => {
         nodes.push({ id: arg.id, content: arg.content, votesCount: arg.votesCount, data: arg });
         if (arg.parentArgumentId) {
           links.push({ source: arg.parentArgumentId, target: arg.id });
@@ -35,69 +48,50 @@ export default function DebateGraph({ argumentsTree }: DebateGraphProps) {
           flattenTree(arg.replies);
         }
       });
-    }
+    };
     flattenTree(argumentsTree);
-    const graphData: GraphData = { nodes, links };
 
-    // 2. SETUP DO SVG E DA SIMULAÇÃO
-    const width = 800;
-    const height = 600;
-    const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height)
-      .attr('viewBox', [-width / 2, -height / 2, width, height]);
-
-    // Limpa o SVG anterior para evitar duplicação
+    const width = 900;
+    const height = 700;
+    const svg = d3.select(svgRef.current).attr('width', width).attr('height', height).attr('viewBox', [-width / 2, -height / 2, width, height]);
     svg.selectAll('*').remove();
 
-    const simulation = d3.forceSimulation(graphData.nodes as any)
-      .force('link', d3.forceLink(graphData.links).id((d: any) => d.id).distance(50))
-      .force('charge', d3.forceManyBody().strength(-200)) // Força de repulsão
-      .force('center', d3.forceCenter(0, 0));
+    const simulation = d3
+      .forceSimulation(nodes as any)
+      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80))
+      .force('charge', d3.forceManyBody().strength(-250))
+      .force('center', d3.forceCenter());
 
-    // 3. RENDERIZAÇÃO DOS ELEMENTOS
-    const link = svg.append('g')
-      .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6)
-      .selectAll('line')
-      .data(graphData.links)
-      .join('line')
-      .attr('stroke-width', 1.5);
+    const link = svg.append('g').attr('stroke', colors.connector).attr('stroke-opacity', 0.6).selectAll('line').data(links).join('line');
 
-    const node = svg.append('g')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 1.5)
+    const node = svg
+      .append('g')
       .selectAll('circle')
-      .data(graphData.nodes)
+      .data(nodes)
       .join('circle')
-      .attr('r', d => Math.max(5, 5 + d.votesCount * 2)) // Raio baseado nos votos
-      .attr('fill', '#007bff')
+      .attr('r', (d) => Math.max(10, 10 + d.votesCount * 3))
+      .attr('fill', (d) => (d.data.parentArgumentId ? colors.replyArgument : colors.rootArgument))
+      .style('cursor', 'pointer')
       .on('click', (event, d) => {
-        // Lógica de clique: por enquanto, apenas mostra no console
-        console.log('Argumento Clicado:', d.data);
-        alert(`Argumento: ${d.content}`);
+        handleNodeClick(d.data);
       });
 
-    // 4. A FUNÇÃO "TICKED"
-    // Esta função é chamada a cada "passo" da simulação física
-    // e atualiza a posição de cada círculo e linha na tela.
+    node.append('title').text((d) => d.content);
+
     simulation.on('tick', () => {
       link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
-
-      node
-        .attr('cx', (d: any) => d.x)
-        .attr('cy', (d: any) => d.y);
+      node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
     });
-
-  }, [argumentsTree]); // Roda o efeito sempre que os dados mudarem
+  }, [argumentsTree]); // CORREÇÃO 2: O array de dependências agora só contém o que realmente muda.
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center items-center w-full">
       <svg ref={svgRef}></svg>
+      <ArgumentModal isOpen={!!selectedArgument} onClose={closeModal} argument={selectedArgument} onReplySuccess={onReplySuccess} />
     </div>
   );
 }

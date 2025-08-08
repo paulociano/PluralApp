@@ -1,64 +1,57 @@
-// Arquivo: src/app/page.tsx
+// Arquivo: src/app/page.tsx (Página Principal)
 'use client';
-import DebateGraph from '@/components/DebateGraph';
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import ArgumentCard from '@/components/ArgumentCard'; // Importa nosso novo componente
+import Link from 'next/link';
 
-// Tipos para os dados que vamos buscar
-type Topic = { id: string; title: string; };
-type Argument = any; // Simplificando o tipo por agora
+type Topic = {
+  id: string;
+  title: string;
+  description: string;
+};
 
 export default function HomePage() {
-  const [topic, setTopic] = useState<Topic | null>(null);
-  const [argumentsTree, setArgumentsTree] = useState<Argument[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Este useEffect agora busca os dados sempre que a 'currentPage' mudar
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTopics = async () => {
       try {
-        // Primeiro, buscamos o tópico para ter seu ID
-        if (!topic) {
-          const topicResponse = await axios.get('http://localhost:3000/debate/featured-topic');
-          setTopic(topicResponse.data);
-        }
-
-        // Se já temos o ID do tópico, buscamos a árvore de argumentos para a página atual
-        if (topic) {
-          const treeResponse = await axios.get(`http://localhost:3000/debate/tree/${topic.id}?page=${currentPage}&limit=5`);
-          setArgumentsTree(treeResponse.data.data);
-          setTotalPages(treeResponse.data.lastPage);
-        }
-      } catch (err) {
-        console.error('Erro ao buscar dados:', err);
-        setError('Não foi possível carregar o debate.');
+        const response = await axios.get('http://localhost:3000/debate/topics');
+        setTopics(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar tópicos", error);
+      } finally {
+        setIsLoading(false);
       }
     };
+    fetchTopics();
+  }, []);
 
-    fetchData();
-  }, [currentPage, topic]); // A 'mágica' do React: rode este efeito quando 'currentPage' ou 'topic' mudar
+  if (isLoading) {
+    return <div className="text-center p-10">Carregando tópicos...</div>;
+  }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto">
-        {topic && (
-          <header className="mb-8 p-6 bg-white rounded-lg shadow text-center">
-            <h1 className="text-4xl font-bold text-gray-900">{topic.title}</h1>
-          </header>
-        )}
-
-        {error && <p className="text-red-500">{error}</p>}
-        {!topic && !error && <p>Carregando debate...</p>}
-
-        {/* AQUI ESTÁ A MUDANÇA PRINCIPAL */}
-        <div className="bg-white rounded-lg shadow">
-          <DebateGraph argumentsTree={argumentsTree} />
-        </div>
-
+    // CORREÇÃO: Este div agora ocupa toda a tela, tem fundo branco e padding
+    <div className="w-full min-h-screen bg-white px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8">
+        <h1 className="text-base font-bold text-[#2D4F5A]">Tópicos em Destaque</h1>
+      </header>
+      <div className="space-y-4">
+        {topics.map((topic) => (
+          <Link
+            key={topic.id}
+            href={`/topic/${topic.id}`}
+            // Ajuste no estilo dos cards para contrastar com o fundo branco
+            className="block p-6 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all"
+          >
+            <h2 className="text-2xl font-semibold text-[#63A6A0]">{topic.title}</h2>
+            <p className="mt-2 text-gray-600">{topic.description}</p>
+          </Link>
+        ))}
       </div>
-    </main>
+    </div>
   );
 }

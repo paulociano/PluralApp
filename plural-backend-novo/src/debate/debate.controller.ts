@@ -109,4 +109,15 @@ export class DebateController {
       dto,
     );
   }
+
+  // ROTA PÚBLICA: Pega todos os tópicos
+  @Get('topics')
+  getAllTopics() {
+    return this.debateService.getAllTopics();
+  }
+  // ROTA PÚBLICA: Pega um único tópico por ID
+  @Get('topic/:id')
+  getTopicById(@Param('id') topicId: string) {
+    return this.debateService.getTopicById(topicId);
+  }
 }
