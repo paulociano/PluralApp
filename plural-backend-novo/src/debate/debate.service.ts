@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// Arquivo: src/debate/debate.service.ts
-// Versão completa e final com deleção em cascata corrigida
+// Versão completa e final com todas as lógicas implementadas
 
 import {
   ForbiddenException,
@@ -18,7 +20,11 @@ import { PaginationDto } from '@/common/dto/pagination.dto';
 export class DebateService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllTopics(category?: TopicCategory, search?: string) {
+  async getAllTopics(
+    category?: TopicCategory,
+    search?: string,
+    includeArgumentCount?: boolean, // 1. Adicionamos o novo parâmetro
+  ) {
     const where: Prisma.TopicWhereInput = {};
 
     if (category) {
@@ -41,14 +47,27 @@ export class DebateService {
         },
       ];
     }
-
-    return this.prisma.topic.findMany({
+    
+    // 2. Preparamos as opções da query
+    const queryOptions: Prisma.TopicFindManyArgs = {
       where,
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    };
+
+    // 3. Se o parâmetro for verdadeiro, adicionamos o 'include'
+    if (includeArgumentCount) {
+      queryOptions.include = {
+        _count: {
+          select: { arguments: true },
+        },
+      };
+    }
+
+    return this.prisma.topic.findMany(queryOptions);
   }
+
 
   async getTopicById(topicId: string) {
     const topic = await this.prisma.topic.findUnique({
@@ -74,6 +93,45 @@ export class DebateService {
       },
     });
   }
+
+  async getFavoriteStatus(userId: string, argumentId: string) {
+    const favorite = await this.prisma.favoriteArgument.findUnique({
+      where: {
+        userId_argumentId: {
+          userId,
+          argumentId,
+        },
+      },
+    });
+    return { isFavorited: !!favorite };
+  }
+
+  async toggleFavorite(userId: string, argumentId: string) {
+    const existingFavorite = await this.prisma.favoriteArgument.findUnique({
+      where: {
+        userId_argumentId: {
+          userId,
+          argumentId,
+        },
+      },
+    });
+
+    if (existingFavorite) {
+      await this.prisma.favoriteArgument.delete({
+        where: { id: existingFavorite.id },
+      });
+      return { message: 'Argumento desfavoritado.', status: 'unfavorited' };
+    } else {
+      await this.prisma.favoriteArgument.create({
+        data: {
+          userId,
+          argumentId,
+        },
+      });
+      return { message: 'Argumento favoritado.', status: 'favorited' };
+    }
+  }
+
 
   async createArgument(userId: string, dto: CreateArgumentDto) {
     if (dto.parentArgumentId) {
@@ -180,7 +238,71 @@ export class DebateService {
   }
 
   async voteOnArgument(userId: string, argumentId: string, type: VoteType) {
-    // ... (a lógica de votação que já tínhamos)
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Verifica se o argumento existe
+      const argument = await tx.argument.findUnique({
+        where: { id: argumentId },
+      });
+      if (!argument) {
+        throw new NotFoundException('Argumento não encontrado.');
+      }
+
+      // 2. Verifica se já existe um voto do usuário para este argumento
+      const existingVote = await tx.vote.findUnique({
+        where: {
+          userId_argumentId: {
+            userId,
+            argumentId,
+          },
+        },
+      });
+
+      let voteCountChange = 0;
+
+      if (existingVote) {
+        // Se o usuário clicou no mesmo tipo de voto, ele está cancelando o voto
+        if (existingVote.type === type) {
+          await tx.vote.delete({
+            where: { id: existingVote.id },
+          });
+          voteCountChange = type === 'UPVOTE' ? -1 : 1;
+        } else {
+          // Se o usuário mudou o tipo de voto (ex: de UPVOTE para DOWNVOTE)
+          await tx.vote.update({
+            where: { id: existingVote.id },
+            data: { type },
+          });
+          // UPVOTE para DOWNVOTE: -2 (remove o up, adiciona o down)
+          // DOWNVOTE para UPVOTE: +2 (remove o down, adiciona o up)
+          voteCountChange = type === 'UPVOTE' ? 2 : -2;
+        }
+      } else {
+        // Se não existe voto, cria um novo
+        await tx.vote.create({
+          data: {
+            userId,
+            argumentId,
+            type,
+          },
+        });
+        voteCountChange = type === 'UPVOTE' ? 1 : -1;
+      }
+
+      // 3. Atualiza a contagem de votos no argumento
+      const updatedArgument = await tx.argument.update({
+        where: { id: argumentId },
+        data: {
+          votesCount: {
+            increment: voteCountChange,
+          },
+        },
+        select: {
+          votesCount: true,
+        },
+      });
+
+      return updatedArgument;
+    });
   }
 
   async editArgument(userId: string, argumentId: string, dto: EditArgumentDto) {
@@ -261,24 +383,19 @@ export class DebateService {
 
   async getTrendingTopics() {
     return this.prisma.topic.findMany({
-      // Inclui uma contagem de quantos argumentos estão relacionados a este tópico
       include: {
         _count: {
           select: { arguments: true },
         },
       },
-      // Ordena os resultados pela contagem de argumentos em ordem decrescente
       orderBy: {
         arguments: {
           _count: 'desc',
         },
       },
-      // Pega apenas os 5 primeiros
       take: 5,
     });
   }
-
-  // Dentro da classe DebateService...
 
   async getArgumentAncestors(argumentId: string) {
     const ancestors = [];
@@ -287,20 +404,18 @@ export class DebateService {
       include: { parentArgument: true },
     });
 
-    // Sobe na hierarquia, adicionando cada pai à lista
     while (currentArgument && currentArgument.parentArgumentId) {
       const parent = await this.prisma.argument.findUnique({
         where: { id: currentArgument.parentArgumentId },
       });
       if (parent) {
         ancestors.push(parent);
-        currentArgument = { ...parent, parentArgument: null }; // Prepara para a próxima iteração
+        currentArgument = { ...parent, parentArgument: null };
       } else {
-        break; // Para o loop se um pai não for encontrado
+        break;
       }
     }
-
-    // A lista está na ordem inversa (filho -> pai -> avô), então a revertemos
+    
     return ancestors.reverse();
   }
 }

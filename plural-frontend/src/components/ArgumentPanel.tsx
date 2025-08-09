@@ -1,192 +1,98 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import ReplyForm from './ReplyForm';
-import { FiArrowUp, FiArrowDown, FiTrash2, FiX, FiChevronRight } from 'react-icons/fi';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { FiCalendar, FiMessageSquare, FiCheckSquare } from 'react-icons/fi';
 
-// Tipos de dados
-type Argument = {
+// Tipos para os dados do perfil
+type ProfileData = {
   id: string;
-  content: string;
-  author: { id: string; name: string };
-  votesCount: number;
-  replyCount: number;
-  topicId: string;
-  parentArgumentId: string | null;
-  type: 'PRO' | 'CONTRA' | 'NEUTRO';
+  name: string;
+  createdAt: string;
+  _count: { arguments: number; votes: number; };
+  recentArguments: {
+    id: string;
+    content: string;
+    createdAt: string;
+    topic: { id: string; title: string; };
+  }[];
 };
 
-type ArgumentPanelProps = {
-  argument: Argument | null;
-  onClose: () => void;
-  onActionSuccess: () => void;
-  onSelectArgument: (arg: Argument) => void;
-};
-
-export default function ArgumentPanel({
-  argument,
-  onClose,
-  onActionSuccess,
-  onSelectArgument,
-}: ArgumentPanelProps) {
-  const { user, token } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ancestors, setAncestors] = useState<Argument[]>([]);
+export default function ProfilePage() {
+  const params = useParams();
+  const userId = params.id as string;
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (argument) {
-      const fetchAncestors = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:3000/debate/argument/${argument.id}/ancestors`,
-          );
-          setAncestors(response.data);
-        } catch (error) {
-          console.error('Erro ao buscar antepassados', error);
-          setAncestors([]);
-        }
-      };
-      fetchAncestors();
-    } else {
-      setAncestors([]);
-    }
-  }, [argument]);
-
-  const handleVote = async (type: 'UPVOTE' | 'DOWNVOTE') => {
-    if (!token || !argument) return;
-    try {
-      await axios.post(
-        `http://localhost:3000/debate/argument/${argument.id}/vote`,
-        { type },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      onActionSuccess();
-    } catch (error) {
-      console.error('Erro ao votar:', error);
-    }
-  };
-
-  const handleReplySubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO') => {
-    if (!token || !argument) return;
-    setIsSubmitting(true);
-    try {
-      await axios.post(
-        'http://localhost:3000/debate/argument',
-        {
-          content,
-          type,
-          topicId: argument.topicId,
-          parentArgumentId: argument.id,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      onActionSuccess();
-    } catch (error) {
-      console.error('Erro ao enviar resposta:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!token || !argument) return;
-    if (
-      window.confirm('Você tem certeza que deseja deletar este argumento?')
-    ) {
+    if (!userId) return;
+    const fetchProfile = async () => {
+      setIsLoading(true);
       try {
-        await axios.delete(
-          `http://localhost:3000/debate/argument/${argument.id}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        onActionSuccess();
-        onClose();
+        const response = await axios.get(`http://localhost:3000/users/${userId}/profile`);
+        setProfile(response.data);
       } catch (error) {
-        console.error('Erro ao deletar argumento:', error);
+        console.error("Erro ao buscar perfil:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  };
+    };
+    fetchProfile();
+  }, [userId]);
 
-  if (!argument) {
-    return (
-      <div className="h-full bg-white flex items-center justify-center p-6 text-gray-500 border-l border-gray-200">
-        Selecione um argumento para ver os detalhes.
-      </div>
-    );
+  if (isLoading) {
+    return <div className="text-center p-10">Carregando perfil...</div>;
+  }
+
+  if (!profile) {
+    return <div className="text-center p-10">Perfil não encontrado.</div>;
   }
 
   return (
-    <div className="h-full bg-white shadow-lg flex flex-col border-l border-gray-200">
-      <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Detalhes do Argumento
-        </h3>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
-        >
-          <FiX className="w-6 h-6 text-gray-600" />
-        </button>
-      </div>
-
-      <div className="p-6 overflow-y-auto flex-1">
-        {ancestors.length > 0 && (
-          <nav className="flex items-center text-sm text-gray-500 mb-4 flex-wrap">
-            {ancestors.map((anc) => (
-              <Fragment key={anc.id}>
-                <button
-                  onClick={() => onSelectArgument(anc)}
-                  className="hover:underline hover:text-[#63A6A0]"
-                >
-                  {anc.content.substring(0, 15)}...
-                </button>
-                <FiChevronRight className="mx-1" />
-              </Fragment>
-            ))}
-            <span className="font-semibold text-gray-800">Argumento Atual</span>
-          </nav>
-        )}
-        <p className="font-semibold text-gray-800 mb-2">de: {argument.author.name}</p>
-        <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
-          {argument.content}
-        </p>
-      </div>
-
-      <div className="p-6 border-t bg-gray-50">
-        <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => handleVote('UPVOTE')}
-              className="p-1 rounded-full hover:bg-green-100"
-            >
-              <FiArrowUp className="w-5 h-5 text-green-600" />
-            </button>
-            <span className="font-bold text-lg text-gray-800">
-              {argument.votesCount}
-            </span>
-            <button
-              onClick={() => handleVote('DOWNVOTE')}
-              className="p-1 rounded-full hover:bg-red-100"
-            >
-              <FiArrowDown className="w-5 h-5 text-red-600" />
-            </button>
+    <div className="max-w-4xl mx-auto p-8">
+      {/* Cabeçalho do Perfil */}
+      <header className="mb-12">
+        <h1 className="font-lora text-5xl font-bold text-[#2D4F5A]">{profile.name}</h1>
+        <div className="flex items-center space-x-6 mt-4 text-gray-500">
+          <div className="flex items-center">
+            <FiCalendar className="mr-2" />
+            <span>Membro desde {new Date(profile.createdAt).toLocaleDateString('pt-BR')}</span>
           </div>
-          <span>Respostas: {argument.replyCount}</span>
+          <div className="flex items-center">
+            <FiMessageSquare className="mr-2" />
+            <span>{profile._count.arguments} argumentos criados</span>
+          </div>
+          <div className="flex items-center">
+            <FiCheckSquare className="mr-2" />
+            <span>{profile._count.votes} votos realizados</span>
+          </div>
         </div>
-        {user && <ReplyForm onSubmit={handleReplySubmit} isSubmitting={isSubmitting} />}
-        {user && user.id === argument.author.id && (
-          <div className="mt-4 border-t pt-4">
-            <button
-              onClick={handleDelete}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 transition-colors"
-            >
-              <FiTrash2 />
-              Deletar Argumento
-            </button>
-          </div>
-        )}
-      </div>
+      </header>
+
+      {/* Atividade Recente */}
+      <section>
+        <h2 className="font-lora text-2xl font-bold text-[#2D4F5A] mb-6">Atividade Recente</h2>
+        <div className="space-y-4">
+          {profile.recentArguments.length > 0 ? (
+            profile.recentArguments.map(arg => (
+              <div key={arg.id} className="p-4 border border-gray-200 rounded-lg bg-white">
+                <p className="text-sm text-gray-700">"{arg.content}"</p>
+                <div className="text-xs text-gray-500 mt-2">
+                  Em <Link href={`/topic/${arg.topic.id}`} className="font-semibold text-[#63A6A0] hover:underline">
+                    {arg.topic.title}
+                  </Link>
+                  {' - '}
+                  {new Date(arg.createdAt).toLocaleString('pt-BR')}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">Nenhuma atividade recente.</p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

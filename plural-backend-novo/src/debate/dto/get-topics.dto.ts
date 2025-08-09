@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { TopicCategory } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBooleanString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class GetTopicsDto {
   @IsEnum(TopicCategory)
@@ -10,4 +10,6 @@ export class GetTopicsDto {
   @IsString() // <-- Adicione
   @IsOptional() // <-- Adicione
   search?: string; // <-- Adicione
+  @IsBooleanString() // Valida se é 'true' ou 'false'
+  includeArgumentCount?: string;
 }

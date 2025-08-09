@@ -3,9 +3,9 @@
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
-  // Pegamos o usuário, a função de logout e o estado de carregamento
   const { user, logout, isLoading } = useAuth();
 
   return (
@@ -25,10 +25,15 @@ export default function Header() {
             </Link>
           </div>
           <div className="flex items-center space-x-4 min-h-[40px]">
-            {/* Mostramos os dados do usuário apenas se ele já foi carregado e existe */}
             {!isLoading && user && (
               <>
-                <span className="text-gray-700 hidden sm:block">Olá, {user.name}</span>
+                <NotificationBell />
+
+                {/* ----- ALTERAÇÃO AQUI ----- */}
+                <Link href={`/profile/${user.id}`} className="text-gray-700 hidden sm:block hover:text-[#2D4F5A] transition-colors">
+                  Olá, {user.name}
+                </Link>
+
                 <button
                   onClick={logout}
                   className="bg-[#63A6A0] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#2D4F5A] transition-colors"
@@ -36,6 +41,17 @@ export default function Header() {
                   Sair
                 </button>
               </>
+            )}
+            
+            {!isLoading && !user && (
+              <div className="space-x-2">
+                <Link href="/login" className="text-gray-700 hover:text-[#2D4F5A]">
+                  Entrar
+                </Link>
+                <Link href="/register" className="bg-[#63A6A0] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#2D4F5A] transition-colors">
+                  Cadastrar
+                </Link>
+              </div>
             )}
           </div>
         </div>

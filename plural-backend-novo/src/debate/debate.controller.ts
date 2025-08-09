@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 // Arquivo: src/debate/debate.controller.ts
 import {
   Body,
@@ -34,9 +35,34 @@ export class DebateController {
     private reportsService: ReportsService,
   ) {}
 
+  @UseGuards(JwtGuard)
+  @Get('argument/:argumentId/favorite')
+  getFavoriteStatus(
+    @Param('argumentId') argumentId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.debateService.getFavoriteStatus(userId, argumentId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('argument/:argumentId/favorite')
+  toggleFavorite(
+    @Param('argumentId') argumentId: string,
+    @GetUser('id') userId: string,
+  ) {
+    return this.debateService.toggleFavorite(userId, argumentId);
+  }
+
   @Get('topics')
   getAllTopics(@Query() dto: GetTopicsDto) {
-    return this.debateService.getAllTopics(dto.category, dto.search); // Passa os dois parâmetros
+    // Converte o parâmetro de string 'true' para um booleano real
+    const shouldIncludeCount = dto.includeArgumentCount === 'true';
+
+    return this.debateService.getAllTopics(
+      dto.category,
+      dto.search,
+      shouldIncludeCount, // Passa o valor booleano para o serviço
+    );
   }
 
   @Get('topic/:id')

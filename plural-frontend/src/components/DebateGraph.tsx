@@ -54,8 +54,8 @@ export default function DebateGraph({ argumentsTree, onNodeClick }: DebateGraphP
 
     const simulation = d3
       .forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80))
-      .force('charge', d3.forceManyBody().strength(-250))
+      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(30))
+      .force('charge', d3.forceManyBody().strength(-50))
       .force('center', d3.forceCenter());
 
     const link = svg.append('g').attr('stroke', colors.connector).attr('stroke-opacity', 0.6).selectAll('line').data(links).join('line');

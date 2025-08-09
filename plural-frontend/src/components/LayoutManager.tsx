@@ -17,7 +17,7 @@ export default function LayoutManager({ children }: { children: React.ReactNode 
   return (
     <>
       {showHeader && <Header />}
-      <main><PageTransition>{children}</PageTransition></main>
+      <main>{children}</main>
     </>
   );
 }

@@ -32,7 +32,7 @@ export default function NewArgumentModal({
     try {
       // A lógica de envio não passa um 'parentArgumentId'
       await axios.post(
-        'http://localhost:3000/debate/argument',
+        'http://localhost:3000/api/debate/argument',
         {
           content,
           type,

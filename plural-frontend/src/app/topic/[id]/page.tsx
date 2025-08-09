@@ -37,8 +37,8 @@ export default function TopicPage() {
     setIsLoadingData(true);
     try {
       const [topicResponse, treeResponse] = await Promise.all([
-        axios.get(`http://localhost:3000/debate/topic/${topicId}`),
-        axios.get(`http://localhost:3000/debate/tree/${topicId}?page=${currentPage}&limit=10`),
+        axios.get(`http://localhost:3000/api/debate/topic/${topicId}`),
+        axios.get(`http://localhost:3000/api/debate/tree/${topicId}?page=${currentPage}&limit=10`),
       ]);
       setTopic(topicResponse.data);
       setArgumentsTree(treeResponse.data.data);

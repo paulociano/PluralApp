@@ -11,16 +11,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
-  arguments Argument[]
-  votes     Vote[]
-  notifications Notification[] @relation("Recipient") // Notificações recebidas
-  triggered     Notification[] @relation("Trigger")   // Notificações que este usuário causou
-  reportsMade   Report[] @relation("Reporter") // Denúncias que o usuário fez
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String
+  password          String
+  createdAt         DateTime           @default(now())
+  arguments         Argument[]
+  votes             Vote[]
+  notifications     Notification[]     @relation("Recipient") // Notificações recebidas
+  triggered         Notification[]     @relation("Trigger")   // Notificações que este usuário causou
+  reportsMade       Report[]           @relation("Reporter") // Denúncias que o usuário fez
+  favoriteArguments FavoriteArgument[]
 }
 
 model Topic {
@@ -33,21 +34,22 @@ model Topic {
 }
 
 model Argument {
-  id               String     @id @default(cuid())
+  id               String             @id @default(cuid())
   content          String
   type             ArgType
-  createdAt        DateTime   @default(now())
-  votesCount       Int        @default(0)
-  replyCount       Int        @default(0)
-  author           User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt        DateTime           @default(now())
+  votesCount       Int                @default(0)
+  replyCount       Int                @default(0)
+  author           User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId         String
-  topic            Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topic            Topic              @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId          String
-  parentArgument   Argument?  @relation("Replies", fields: [parentArgumentId], references: [id], onDelete: SetNull)
+  parentArgument   Argument?          @relation("Replies", fields: [parentArgumentId], references: [id], onDelete: SetNull)
   parentArgumentId String?
-  replies          Argument[] @relation("Replies")
+  replies          Argument[]         @relation("Replies")
   votes            Vote[]
-  reports          Report[]   @relation("ReportedArgument")
+  reports          Report[]           @relation("ReportedArgument")
+  favoritedBy      FavoriteArgument[]
 }
 
 model Vote {
@@ -61,40 +63,41 @@ model Vote {
   @@unique([userId, argumentId])
 }
 
+model FavoriteArgument {
+  id         String   @id @default(cuid())
+  userId     String
+  argumentId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  argument Argument @relation(fields: [argumentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, argumentId])
+}
+
 model Notification {
-  id                String           @id @default(cuid())
-  type              NotificationType
-  isRead            Boolean          @default(false)
-  createdAt         DateTime         @default(now())
-
-  // Quem recebe a notificação
-  recipient   User   @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  recipientId String
-
-  // Quem causou a notificação
-  triggerUser   User   @relation("Trigger", fields: [triggerUserId], references: [id], onDelete: Cascade)
-  triggerUserId String
-
-  // O argumento original que recebeu a resposta
+  id               String           @id @default(cuid())
+  type             NotificationType
+  isRead           Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  recipient        User             @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId      String
+  triggerUser      User             @relation("Trigger", fields: [triggerUserId], references: [id], onDelete: Cascade)
+  triggerUserId    String
   originArgumentId String
 }
 
 model Report {
-  id                  String       @id @default(cuid())
-  reason              ReportReason
-  notes               String?
-  status              ReportStatus @default(PENDING)
-  createdAt           DateTime     @default(now())
-
-  // Relação com quem denunciou
-  reporter   User   @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  reporterId String
-
-  // Relação com o argumento denunciado
-  reportedArgument   Argument @relation("ReportedArgument", fields: [reportedArgumentId], references: [id], onDelete: Cascade)
+  id                 String       @id @default(cuid())
+  reason             ReportReason
+  notes              String?
+  status             ReportStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+  reporter           User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId         String
+  reportedArgument   Argument     @relation("ReportedArgument", fields: [reportedArgumentId], references: [id], onDelete: Cascade)
   reportedArgumentId String
 
-  // Garante que um usuário não pode denunciar o mesmo argumento múltiplas vezes
   @@unique([reporterId, reportedArgumentId])
 }
 
