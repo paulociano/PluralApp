@@ -277,4 +277,30 @@ export class DebateService {
       take: 5,
     });
   }
+
+  // Dentro da classe DebateService...
+
+  async getArgumentAncestors(argumentId: string) {
+    const ancestors = [];
+    let currentArgument = await this.prisma.argument.findUnique({
+      where: { id: argumentId },
+      include: { parentArgument: true },
+    });
+
+    // Sobe na hierarquia, adicionando cada pai à lista
+    while (currentArgument && currentArgument.parentArgumentId) {
+      const parent = await this.prisma.argument.findUnique({
+        where: { id: currentArgument.parentArgumentId },
+      });
+      if (parent) {
+        ancestors.push(parent);
+        currentArgument = { ...parent, parentArgument: null }; // Prepara para a próxima iteração
+      } else {
+        break; // Para o loop se um pai não for encontrado
+      }
+    }
+
+    // A lista está na ordem inversa (filho -> pai -> avô), então a revertemos
+    return ancestors.reverse();
+  }
 }

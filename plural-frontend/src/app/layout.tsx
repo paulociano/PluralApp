@@ -1,11 +1,19 @@
 // Arquivo: src/app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Lora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import  LayoutManager from "@/components/LayoutManager";
 
-const inter = Inter({ subsets: ["latin"] });
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-lora",
+});
 
 export const metadata: Metadata = {
   title: "Plural",
@@ -19,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={lora.className}>
         <AuthProvider>
           <LayoutManager>{children}</LayoutManager>
         </AuthProvider>

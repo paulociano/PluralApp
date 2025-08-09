@@ -3,6 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import Header from './Header';
+import PageTransition from './PageTransition';
 
 // Este componente decide o que mostrar com base na rota
 export default function LayoutManager({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default function LayoutManager({ children }: { children: React.ReactNode 
   return (
     <>
       {showHeader && <Header />}
-      <main>{children}</main>
+      <main><PageTransition>{children}</PageTransition></main>
     </>
   );
 }

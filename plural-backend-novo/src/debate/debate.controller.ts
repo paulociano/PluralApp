@@ -54,6 +54,11 @@ export class DebateController {
     return this.debateService.getTrendingTopics();
   }
 
+  @Get('argument/:id/ancestors')
+  getArgumentAncestors(@Param('id') argumentId: string) {
+    return this.debateService.getArgumentAncestors(argumentId);
+  }
+
   @Get('tree/:topicId')
   getArgumentTree(
     @Param('topicId') topicId: string,
