@@ -1,37 +1,46 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import api from '@/lib/api'; // Usando nossa instância centralizada do Axios
 import { useRouter } from 'next/navigation';
 
-type User = { id: string; email: string; name: string; };
+// Define a estrutura do usuário e do contexto
+type User = {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+};
+
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
+// Cria o contexto com um valor padrão
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Componente Provedor que envolve a aplicação
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Efeito para carregar o usuário do localStorage ao iniciar a aplicação
   useEffect(() => {
     const loadUserFromStorage = async () => {
       const storedToken = localStorage.getItem('plural_token');
       if (storedToken) {
         setToken(storedToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`; // Adicionado para consistência
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         try {
-          // CORREÇÃO AQUI: Adicionado o /api
-          const userResponse = await axios.get('http://localhost:3000/api/users/me', {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
+          const userResponse = await api.get('/users/me');
           setUser(userResponse.data);
         } catch (error) {
           console.error('Sessão inválida, limpando token.', error);
@@ -45,20 +54,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUserFromStorage();
   }, []);
 
-  const login = async (email, password) => {
+  // Função de LOGIN
+  const login = async (email: any, password: any) => {
     try {
-      // CORREÇÃO AQUI: Adicionado o /api
-      const response = await axios.post('http://localhost:3000/api/auth/signin', { email, password });
+      const response = await api.post('/auth/signin', { email, password });
       
       const { access_token } = response.data;
       setToken(access_token);
       localStorage.setItem('plural_token', access_token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
-      // Com o header padrão do axios já configurado, não precisamos mais passar o header aqui
-      // CORREÇÃO AQUI: Adicionado o /api
-      const userResponse = await axios.get('http://localhost:3000/api/users/me');
-      
+      const userResponse = await api.get('/users/me');
       setUser(userResponse.data);
       router.push('/');
     } catch (error) {
@@ -67,21 +73,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Função de CADASTRO (SIGNUP)
+  const signup = async (name: any, username: any, email: any, password: any) => {
+    try {
+      const response = await api.post('/auth/signup', { name, username, email, password });
+      const { access_token } = response.data;
+
+      // Após o cadastro, loga o usuário automaticamente
+      setToken(access_token);
+      localStorage.setItem('plural_token', access_token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
+      const userResponse = await api.get('/users/me');
+      setUser(userResponse.data);
+      
+      router.push('/'); // Redireciona para a home
+    } catch (error) {
+      console.error("Falha no cadastro:", error);
+      throw error;
+    }
+  };
+
+  // Função de LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('plural_token');
-    delete axios.defaults.headers.common['Authorization']; // Limpa o header padrão
+    delete api.defaults.headers.common['Authorization'];
     router.push('/login');
   };
 
+  const value = { user, token, isLoading, login, signup, logout };
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// Hook customizado para facilitar o uso do contexto
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

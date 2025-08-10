@@ -22,7 +22,9 @@ import Avatar from './Avatar';
 type Argument = {
   id: string;
   content: string;
-  author: { id: string; name: string };
+  author: {
+    username: string; id: string; name: string 
+};
   votesCount: number;
   replyCount: number;
   topicId: string;
@@ -171,8 +173,11 @@ export default function ArgumentPanel({
           )}
           <div className='flex items-center space-x-3 mb-4'>
           <Avatar name={localArgument.author.name} size={32} />
-          <p className="font-semibold text-gray-800 mb-2">
-            <Link href={`/profile/${localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
+          <p className="font-semibold text-gray-800">
+            {/* O link agora usa o 'username' do autor, se existir. 
+                Caso contrário (para usuários antigos que não definiram um), 
+                ele usa o 'id' como fallback. */}
+            de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
               {localArgument.author.name}
             </Link>
           </p>

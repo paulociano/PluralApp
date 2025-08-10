@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body className={`bg-gray-50`}>
+      <body className={` bg-gray-50`}>
         <AuthProvider>
           <HeaderProvider>
             <LayoutManager>{children}</LayoutManager>

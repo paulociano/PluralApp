@@ -43,7 +43,7 @@ export default function Header() {
               <>
                 <NotificationBell />
                 <Avatar name={user.name} size={32} />
-                <Link href={`/profile/${user.id}`} className="text-gray-700 hidden sm:block hover:text-[#2D4F5A] transition-colors">
+                <Link href={`/profile/${user.username}`} className="text-gray-700 hidden sm:block hover:text-[#2D4F5A] transition-colors">
                   Olá, {user.name}
                 </Link>
                 <button

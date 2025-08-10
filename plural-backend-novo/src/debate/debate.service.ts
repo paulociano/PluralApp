@@ -61,6 +61,7 @@ export class DebateService {
     return this.prisma.topic.findMany(queryOptions);
   }
 
+
   async getTopicById(topicId: string) {
     const topic = await this.prisma.topic.findUnique({
       where: { id: topicId },
@@ -124,10 +125,14 @@ export class DebateService {
     }
   }
 
+
   async createArgument(userId: string, dto: CreateArgumentDto) {
-    const createAndCheckBadges = async (tx: Prisma.TransactionClient) => {
+    return this.prisma.$transaction(async (tx) => {
       const argument = await tx.argument.create({
-        data: { authorId: userId, ...dto },
+        data: {
+          authorId: userId,
+          ...dto,
+        },
       });
 
       if (dto.parentArgumentId) {
@@ -151,13 +156,16 @@ export class DebateService {
           });
         }
       }
+
+      // Atribui pontos por criar um argumento
+      await tx.user.update({
+        where: { id: userId },
+        data: { points: { increment: 5 } },
+      });
       
       await this.checkAndAwardBadgesOnArgumentCreation(userId, tx);
-
       return argument;
-    };
-
-    return this.prisma.$transaction(createAndCheckBadges);
+    });
   }
 
   async getArgumentTreeForTopic(topicId: string, paginationDto: PaginationDto) {
@@ -180,7 +188,7 @@ export class DebateService {
       skip: skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { author: { select: { id: true, name: true } } },
+      include: { author: { select: { id: true, name: true, username: true } } },
     });
 
     const getRepliesRecursively = async (parentId: string): Promise<any[]> => {
@@ -213,7 +221,7 @@ export class DebateService {
       where: { id: argumentId },
       include: {
         author: { select: { id: true, name: true } },
-        replies: { include: { author: { select: { id: true, name: true } } } },
+        replies: { include: { author: { select: { id: true, name: true, username: true } } } },
       },
     });
 
@@ -234,51 +242,47 @@ export class DebateService {
 
       const existingVote = await tx.vote.findUnique({
         where: {
-          userId_argumentId: {
-            userId,
-            argumentId,
-          },
+          userId_argumentId: { userId, argumentId },
         },
       });
 
       let voteCountChange = 0;
+      let pointsChange = 0; // Lógica de pontos
 
       if (existingVote) {
-        if (existingVote.type === type) {
-          await tx.vote.delete({
-            where: { id: existingVote.id },
-          });
+        if (existingVote.type === type) { // Cancelando o voto
+          await tx.vote.delete({ where: { id: existingVote.id } });
           voteCountChange = type === 'UPVOTE' ? -1 : 1;
-        } else {
-          await tx.vote.update({
-            where: { id: existingVote.id },
-            data: { type },
-          });
+          pointsChange = type === 'UPVOTE' ? -2 : 1; // Reverte os pontos do autor
+        } else { // Mudando o voto
+          await tx.vote.update({ where: { id: existingVote.id }, data: { type } });
           voteCountChange = type === 'UPVOTE' ? 2 : -2;
+          pointsChange = type === 'UPVOTE' ? 3 : -3; // UPVOTE -> DOWNVOTE (-2 -1 = -3); DOWNVOTE -> UPVOTE (+1 +2 = +3)
         }
-      } else {
-        await tx.vote.create({
-          data: {
-            userId,
-            argumentId,
-            type,
-          },
-        });
+      } else { // Novo voto
+        await tx.vote.create({ data: { userId, argumentId, type } });
         voteCountChange = type === 'UPVOTE' ? 1 : -1;
+        pointsChange = type === 'UPVOTE' ? 2 : -1; // Concede pontos ao autor
       }
 
       const updatedArgument = await tx.argument.update({
         where: { id: argumentId },
         data: {
-          votesCount: {
-            increment: voteCountChange,
-          },
+          votesCount: { increment: voteCountChange },
         },
         select: {
           votesCount: true,
           authorId: true,
         },
       });
+
+      // Aplica a mudança de pontos ao AUTOR do argumento (se for diferente de quem votou)
+      if (pointsChange !== 0 && argument.authorId !== userId) {
+        await tx.user.update({
+          where: { id: updatedArgument.authorId },
+          data: { points: { increment: pointsChange } },
+        });
+      }
 
       if (type === 'UPVOTE' && updatedArgument.votesCount >= 10) {
         await this.checkAndAwardPopularArgumentBadge(updatedArgument.authorId, tx);
