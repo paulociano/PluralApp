@@ -3,17 +3,8 @@ import type { Metadata } from "next";
 import { Manrope, Lora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import  LayoutManager from "@/components/LayoutManager";
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-manrope",
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
-});
+import { HeaderProvider } from "@/context/HeaderContext";
+import LayoutManager from "@/components/LayoutManager";
 
 export const metadata: Metadata = {
   title: "Plural",
@@ -26,10 +17,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={lora.className}>
+    <html lang="pt-br">
+      <body className={`bg-gray-50`}>
         <AuthProvider>
-          <LayoutManager>{children}</LayoutManager>
+          <HeaderProvider>
+            <LayoutManager>{children}</LayoutManager>
+          </HeaderProvider>
         </AuthProvider>
       </body>
     </html>

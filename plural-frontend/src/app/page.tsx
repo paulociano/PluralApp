@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import Sidebar from '@/components/Sidebar';
 import SearchBar from '@/components/SearchBar';
 import TrendingTopics from '@/components/TrendingTopics';
-
-// Nossos novos componentes de card
 import FeaturedTopicCard from '@/components/FeaturedTopicCard';
 import TopicGridCard from '@/components/TopicGridCard';
 
-// O tipo agora precisa incluir a contagem de argumentos
+// 1. Importe os ícones do Heroicons
+import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
+import api from '@/lib/api'; // Usando a instância centralizada do Axios
+
 type Topic = {
   id: string;
   title: string;
@@ -21,7 +21,7 @@ type Topic = {
 
 export default function HomePage() {
   const [allTopics, setAllTopics] = useState<Topic[]>([]);
-  const [trendingTopics, setTrendingTopics] = useState<Topic[]>([]); // Usando o mesmo tipo
+  const [trendingTopics, setTrendingTopics] = useState<Topic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,9 +31,8 @@ export default function HomePage() {
       setIsLoading(true);
       try {
         const [topicsResponse, trendingResponse] = await Promise.all([
-          // Vamos pedir para a API de topics já incluir a contagem
-          axios.get('http://localhost:3000/api/debate/topics?includeArgumentCount=true'),
-          axios.get('http://localhost:3000/api/debate/trending')
+          api.get('/debate/topics?includeArgumentCount=true'),
+          api.get('/debate/trending')
         ]);
         setAllTopics(topicsResponse.data);
         setTrendingTopics(trendingResponse.data);
@@ -79,13 +78,16 @@ export default function HomePage() {
             <>
               {filteredTopics.length > 0 ? (
                 <>
-                  {/* Tópico Herói */}
+                  {/* Seção Tópico Herói com novo ícone */}
                   <FeaturedTopicCard topic={filteredTopics[0]} />
 
-                  {/* Grade com os demais tópicos */}
+                  {/* Seção Mais Debates com novo ícone */}
                   {filteredTopics.length > 1 && (
                     <div className="mt-12">
-                      <h2 className="font-lora text-2xl font-bold text-[#2D4F5A] mb-6">Mais Debates</h2>
+                      <h2 className="font-lora text-2xl font-bold text-[#2D4F5A] mb-6 flex items-center">
+                        <ArrowTrendingUpIcon className="h-6 w-6 mr-3 text-[#63A6A0]" />
+                        Mais Debates
+                      </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {filteredTopics.slice(1).map((topic) => (
                           <TopicGridCard key={topic.id} topic={topic} />

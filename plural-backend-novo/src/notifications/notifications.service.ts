@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/require-await */
 // Arquivo: src/notifications/notifications.service.ts
 import {
   ForbiddenException,
@@ -13,18 +11,23 @@ export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
   async getNotificationsForUser(userId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return this.prisma.notification.findMany({
       where: { recipientId: userId },
       orderBy: { createdAt: 'desc' },
+      take: 20, // Pega as últimas 20 para não sobrecarregar
       include: {
         triggerUser: { select: { id: true, name: true } },
+        // Precisamos incluir os dados do argumento original para pegar o topicId
+        originArgument: {
+          select: {
+            topicId: true,
+          },
+        },
       },
     });
   }
 
   async markAsRead(userId: string, notificationId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const notification = await this.prisma.notification.findUnique({
       where: { id: notificationId },
     });
@@ -33,12 +36,9 @@ export class NotificationsService {
       throw new NotFoundException('Notificação não encontrada.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (notification.recipientId !== userId) {
       throw new ForbiddenException('Acesso negado.');
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return this.prisma.notification.update({
       where: { id: notificationId },
       data: { isRead: true },

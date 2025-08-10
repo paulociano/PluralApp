@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { FiBell } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
-import NotificationItem from './NotificationItem'; // Importe o novo componente
+import NotificationItem from './NotificationItem';
 
 // Tipo para uma notificação
 type Notification = {
@@ -13,7 +13,7 @@ type Notification = {
   createdAt: string;
   triggerUser: { name: string };
   originArgumentId: string;
-  topicId?: string;
+  originArgument?: { topicId: string };
 };
 
 export default function NotificationBell() {
@@ -25,9 +25,7 @@ export default function NotificationBell() {
     if (!token) return;
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get<Notification[]>('http://localhost:3000/api/notifications', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get<Notification[]>('/notifications');
         setNotifications(response.data);
       } catch (error) {
         console.error('Erro ao buscar notificações:', error);
@@ -36,12 +34,16 @@ export default function NotificationBell() {
     fetchNotifications();
   }, [token]);
 
-  // Função para o filho chamar quando uma notificação for lida
   const handleNotificationRead = useCallback((notificationId: string) => {
     setNotifications(prev =>
       prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n))
     );
   }, []);
+
+  // 1. Crie uma função para fechar o menu
+  const closeDropdown = () => {
+    setIsOpen(false);
+  };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -66,6 +68,8 @@ export default function NotificationBell() {
                   key={notif.id}
                   notification={notif}
                   onNotificationRead={handleNotificationRead}
+                  // 2. Passe a função de fechar como uma prop para o filho
+                  onItemClick={closeDropdown}
                 />
               ))
             ) : (

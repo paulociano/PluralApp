@@ -1,10 +1,13 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client';
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiCalendar, FiMessageSquare, FiCheckSquare, FiBookmark } from 'react-icons/fi';
+import { FiMessageSquare, FiCheckSquare, FiBookmark, FiStar } from 'react-icons/fi';
+import Avatar from '@/components/Avatar';
+import BadgeIcon from '@/components/BadgeIcon';
 
 // --- DEFINIÇÃO DE TIPOS ---
 type Argumento = {
@@ -25,7 +28,11 @@ type ProfileData = {
   createdAt: string;
   _count: { arguments: number; votes: number; };
   recentArguments: Argumento[];
+  badges: UserBadge[];
 };
+
+type Badge = { id: string; name: string; description: string; icon: string; };
+type UserBadge = { id: string; badge: Badge; };
 
 export default function ProfilePage() {
   const params = useParams();
@@ -71,7 +78,8 @@ export default function ProfilePage() {
     <div className="bg-white min-h-screen py-12">
       <div className="max-w-4xl mx-auto px-8">
         {/* Cabeçalho Hero */}
-        <header className="text-center mb-10">
+        <header className="text-center mb-10 flex flex-col items-center justify-center">
+          <Avatar name={profile.name} size={96}/>
           <h1 className="font-lora text-5xl font-bold text-[#2D4F5A] mb-2">{profile.name}</h1>
           <p className="text-gray-500">Membro desde {new Date(profile.createdAt).toLocaleDateString('pt-BR')}</p>
         </header>
@@ -89,12 +97,32 @@ export default function ProfilePage() {
             <p className="text-gray-600 text-sm mt-1">Votos Realizados</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 text-center">
-            <div className="mx-auto w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-2">
-              <span className="text-xl">⭐</span>
-            </div>
-            <span className="font-bold text-3xl text-gray-800">0</span>
+            <FiStar className="mx-auto text-2xl text-[#63A6A0] mb-2" />
+            <span className="font-bold text-3xl text-gray-800">{profile.badges.length}</span>
             <p className="text-gray-600 text-sm mt-1">Conquistas</p>
           </div>
+        </section>
+
+        <section className="mb-12">
+          <h2 className="font-lora text-2xl font-bold text-[#2D4F5A] mb-6">Conquistas</h2>
+          {profile.badges.length > 0 ? (
+            <div className="flex flex-wrap gap-4">
+              {profile.badges.map(userBadge => (
+                <div key={userBadge.id} className="group relative flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-3xl text-yellow-500">
+                    <BadgeIcon iconName={userBadge.badge.icon} size={32} />
+                  </div>
+                  <p className="text-xs text-gray-800 font-semibold mt-2">{userBadge.badge.name}</p>
+                  {/* Tooltip com a descrição */}
+                  <div className="absolute bottom-full mb-2 w-48 p-2 bg-[#2D4F5A] text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    {userBadge.badge.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">Nenhuma conquista desbloqueada ainda.</p>
+          )}
         </section>
 
         {/* Atividade Recente */}

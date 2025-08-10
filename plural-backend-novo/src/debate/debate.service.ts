@@ -1,10 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// Versão completa e final com todas as lógicas implementadas
 
 import {
   ForbiddenException,
@@ -23,7 +18,7 @@ export class DebateService {
   async getAllTopics(
     category?: TopicCategory,
     search?: string,
-    includeArgumentCount?: boolean, // 1. Adicionamos o novo parâmetro
+    includeArgumentCount?: boolean,
   ) {
     const where: Prisma.TopicWhereInput = {};
 
@@ -48,7 +43,6 @@ export class DebateService {
       ];
     }
     
-    // 2. Preparamos as opções da query
     const queryOptions: Prisma.TopicFindManyArgs = {
       where,
       orderBy: {
@@ -56,7 +50,6 @@ export class DebateService {
       },
     };
 
-    // 3. Se o parâmetro for verdadeiro, adicionamos o 'include'
     if (includeArgumentCount) {
       queryOptions.include = {
         _count: {
@@ -67,7 +60,6 @@ export class DebateService {
 
     return this.prisma.topic.findMany(queryOptions);
   }
-
 
   async getTopicById(topicId: string) {
     const topic = await this.prisma.topic.findUnique({
@@ -132,17 +124,13 @@ export class DebateService {
     }
   }
 
-
   async createArgument(userId: string, dto: CreateArgumentDto) {
-    if (dto.parentArgumentId) {
-      return this.prisma.$transaction(async (tx) => {
-        const newReply = await tx.argument.create({
-          data: {
-            authorId: userId,
-            ...dto,
-          },
-        });
+    const createAndCheckBadges = async (tx: Prisma.TransactionClient) => {
+      const argument = await tx.argument.create({
+        data: { authorId: userId, ...dto },
+      });
 
+      if (dto.parentArgumentId) {
         await tx.argument.update({
           where: { id: dto.parentArgumentId },
           data: { replyCount: { increment: 1 } },
@@ -162,16 +150,14 @@ export class DebateService {
             },
           });
         }
-        return newReply;
-      });
-    } else {
-      return this.prisma.argument.create({
-        data: {
-          authorId: userId,
-          ...dto,
-        },
-      });
-    }
+      }
+      
+      await this.checkAndAwardBadgesOnArgumentCreation(userId, tx);
+
+      return argument;
+    };
+
+    return this.prisma.$transaction(createAndCheckBadges);
   }
 
   async getArgumentTreeForTopic(topicId: string, paginationDto: PaginationDto) {
@@ -239,7 +225,6 @@ export class DebateService {
 
   async voteOnArgument(userId: string, argumentId: string, type: VoteType) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Verifica se o argumento existe
       const argument = await tx.argument.findUnique({
         where: { id: argumentId },
       });
@@ -247,7 +232,6 @@ export class DebateService {
         throw new NotFoundException('Argumento não encontrado.');
       }
 
-      // 2. Verifica se já existe um voto do usuário para este argumento
       const existingVote = await tx.vote.findUnique({
         where: {
           userId_argumentId: {
@@ -260,24 +244,19 @@ export class DebateService {
       let voteCountChange = 0;
 
       if (existingVote) {
-        // Se o usuário clicou no mesmo tipo de voto, ele está cancelando o voto
         if (existingVote.type === type) {
           await tx.vote.delete({
             where: { id: existingVote.id },
           });
           voteCountChange = type === 'UPVOTE' ? -1 : 1;
         } else {
-          // Se o usuário mudou o tipo de voto (ex: de UPVOTE para DOWNVOTE)
           await tx.vote.update({
             where: { id: existingVote.id },
             data: { type },
           });
-          // UPVOTE para DOWNVOTE: -2 (remove o up, adiciona o down)
-          // DOWNVOTE para UPVOTE: +2 (remove o down, adiciona o up)
           voteCountChange = type === 'UPVOTE' ? 2 : -2;
         }
       } else {
-        // Se não existe voto, cria um novo
         await tx.vote.create({
           data: {
             userId,
@@ -288,7 +267,6 @@ export class DebateService {
         voteCountChange = type === 'UPVOTE' ? 1 : -1;
       }
 
-      // 3. Atualiza a contagem de votos no argumento
       const updatedArgument = await tx.argument.update({
         where: { id: argumentId },
         data: {
@@ -298,10 +276,15 @@ export class DebateService {
         },
         select: {
           votesCount: true,
+          authorId: true,
         },
       });
 
-      return updatedArgument;
+      if (type === 'UPVOTE' && updatedArgument.votesCount >= 10) {
+        await this.checkAndAwardPopularArgumentBadge(updatedArgument.authorId, tx);
+      }
+
+      return { votesCount: updatedArgument.votesCount };
     });
   }
 
@@ -417,5 +400,46 @@ export class DebateService {
     }
     
     return ancestors.reverse();
+  }
+
+  private async checkAndAwardBadgesOnArgumentCreation(userId: string, tx: Prisma.TransactionClient) {
+    const userBadges = await tx.userBadge.findMany({
+      where: { userId },
+      include: { badge: true },
+    });
+    const userBadgeNames = userBadges.map(ub => ub.badge.name);
+
+    if (!userBadgeNames.includes('Iniciante Curioso')) {
+      const argumentCount = await tx.argument.count({ where: { authorId: userId } });
+      if (argumentCount === 1) {
+        const badge = await tx.badge.findUnique({ where: { name: 'Iniciante Curioso' } });
+        if (badge) await tx.userBadge.create({ data: { userId, badgeId: badge.id } });
+      }
+    }
+    
+    if (!userBadgeNames.includes('Voz Ativa')) {
+        const argumentCount = await tx.argument.count({ where: { authorId: userId } });
+        if(argumentCount >= 10) {
+            const badge = await tx.badge.findUnique({ where: { name: 'Voz Ativa' } });
+            if (badge) await tx.userBadge.create({ data: { userId, badgeId: badge.id } });
+        }
+    }
+  }
+
+  private async checkAndAwardPopularArgumentBadge(authorId: string, tx: Prisma.TransactionClient) {
+    const userBadges = await tx.userBadge.findMany({
+      where: { userId: authorId },
+      include: { badge: true },
+    });
+    const userBadgeNames = userBadges.map(ub => ub.badge.name);
+
+    if (!userBadgeNames.includes('Argumento Popular')) {
+      const badge = await tx.badge.findUnique({ where: { name: 'Argumento Popular' } });
+      if (badge) {
+        await tx.userBadge.create({
+          data: { userId: authorId, badgeId: badge.id },
+        });
+      }
+    }
   }
 }

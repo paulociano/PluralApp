@@ -22,6 +22,7 @@ model User {
   triggered         Notification[]     @relation("Trigger")   // Notificações que este usuário causou
   reportsMade       Report[]           @relation("Reporter") // Denúncias que o usuário fez
   favoriteArguments FavoriteArgument[]
+  badges            UserBadge[]
 }
 
 model Topic {
@@ -50,6 +51,8 @@ model Argument {
   votes            Vote[]
   reports          Report[]           @relation("ReportedArgument")
   favoritedBy      FavoriteArgument[]
+
+  Notification Notification[] @relation("OriginArgumentNotifications")
 }
 
 model Vote {
@@ -85,6 +88,7 @@ model Notification {
   triggerUser      User             @relation("Trigger", fields: [triggerUserId], references: [id], onDelete: Cascade)
   triggerUserId    String
   originArgumentId String
+  originArgument   Argument         @relation("OriginArgumentNotifications", fields: [originArgumentId], references: [id], onDelete: Cascade)
 }
 
 model Report {
@@ -99,6 +103,27 @@ model Report {
   reportedArgumentId String
 
   @@unique([reporterId, reportedArgumentId])
+}
+
+model Badge {
+  id          String       @id @default(cuid())
+  name        String       @unique // Ex: "Iniciante Curioso"
+  description String       // Ex: "Criou seu primeiro argumento."
+  icon        String       // Ex: "FiFeather" (nome do ícone)
+  createdAt   DateTime     @default(now())
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
 }
 
 enum ArgType {

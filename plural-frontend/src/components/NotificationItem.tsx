@@ -1,50 +1,50 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';
+import api from '@/lib/api';
 
-// Tipo para uma notificação (pode ser compartilhado)
 type Notification = {
   id: string;
   isRead: boolean;
   createdAt: string;
   triggerUser: { name: string };
   originArgumentId: string;
-  // Adicione topicId se disponível para facilitar a navegação
-  topicId?: string; // Exemplo: você pode precisar buscar isso no backend
+  originArgument?: { topicId: string };
 };
 
+// 1. Atualize as props para incluir a nova função
 type NotificationItemProps = {
   notification: Notification;
   onNotificationRead: (notificationId: string) => void;
+  onItemClick: () => void; // Função para fechar o menu
 };
 
-export default function NotificationItem({ notification, onNotificationRead }: NotificationItemProps) {
+export default function NotificationItem({ notification, onNotificationRead, onItemClick }: NotificationItemProps) {
   const router = useRouter();
-  const { token } = useAuth();
 
   const handleNotificationClick = async () => {
-    // Navega o usuário para o argumento de origem
-    // Idealmente, a notificação deveria retornar o topicId para a URL ser construída
-    // Por enquanto, vamos simular que o tópico é 'some-topic-id'
-    // TODO: Ajustar a navegação para a URL correta do tópico
-    router.push(`/topic/some-topic-id?argumentId=${notification.originArgumentId}`);
+    if (!notification.originArgument?.topicId) {
+      console.error("Dados da notificação incompletos:", notification);
+      return; 
+    }
 
-    // Se a notificação não estiver lida, faz a chamada à API
-    if (!notification.isRead && token) {
+    const topicId = notification.originArgument.topicId;
+    const argumentId = notification.originArgumentId;
+    const targetUrl = `/topic/${topicId}?argumentId=${argumentId}`;
+    
+    router.push(targetUrl);
+
+    if (!notification.isRead) {
       try {
-        await axios.patch(
-          `http://localhost:3000/api/notifications/${notification.id}/read`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        // Informa o componente pai que esta notificação foi lida
+        await api.patch(`/notifications/${notification.id}/read`);
         onNotificationRead(notification.id);
       } catch (error) {
         console.error("Erro ao marcar notificação como lida", error);
       }
     }
+    
+    // 2. Chame a função para fechar o menu no final do clique
+    onItemClick();
   };
 
   return (
@@ -53,7 +53,6 @@ export default function NotificationItem({ notification, onNotificationRead }: N
       className="border-b last:border-b-0 hover:bg-gray-100 cursor-pointer"
     >
       <div className="p-4 flex items-start space-x-3">
-        {/* Indicador de não lida */}
         {!notification.isRead && (
           <div className="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
         )}

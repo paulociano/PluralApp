@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 // Arquivo: src/users/user.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -36,7 +32,6 @@ export class UsersService {
   }
 
   async getUserProfile(userId: string) {
-    // ... (este método permanece o mesmo)
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -47,6 +42,11 @@ export class UsersService {
           select: {
             arguments: true,
             votes: true,
+          },
+        },
+        badges: {
+          include: {
+            badge: true, // Inclui os detalhes de cada conquista
           },
         },
       },
