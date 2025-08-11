@@ -1,23 +1,53 @@
-// Arquivo: src/components/LayoutManager.tsx
 'use client';
 
-import { usePathname } from 'next/navigation';
-import Header from './Header';
-import PageTransition from './PageTransition';
+import { useAuth } from "@/context/AuthContext";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Header from "./Header";
+// A importação de PageTransition foi removida daqui
 
-// Este componente decide o que mostrar com base na rota
+// Defina aqui as rotas que um usuário deslogado PODE acessar
+const PUBLIC_PATHS = ['/login', '/register', '/signup'];
+
 export default function LayoutManager({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Lista de rotas onde o Header NÃO deve aparecer
-  const noHeaderRoutes = ['/login', '/signup'];
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
 
-  const showHeader = !noHeaderRoutes.includes(pathname);
+    const isPublicPath = PUBLIC_PATHS.includes(pathname);
 
-  return (
-    <>
-      {showHeader && <Header />}
-      <main>{children}</main>
-    </>
-  );
+    if (!user && !isPublicPath) {
+      router.push('/login');
+    }
+  }, [user, isLoading, pathname, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+  
+  if (!user && PUBLIC_PATHS.includes(pathname)) {
+    // Apenas renderiza o conteúdo da página, sem o PageTransition
+    return <main>{children}</main>;
+  }
+
+  if (user) {
+    return (
+      <>
+        <Header />
+        {/* Apenas renderiza o conteúdo da página, sem o PageTransition */}
+        <main>{children}</main>
+      </>
+    );
+  }
+
+  return null;
 }

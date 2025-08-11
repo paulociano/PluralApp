@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { HeaderProvider } from "@/context/HeaderContext";
 import LayoutManager from "@/components/LayoutManager";
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: "Plural",
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={` bg-gray-50`}>
         <AuthProvider>
           <HeaderProvider>
+             <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
             <LayoutManager>{children}</LayoutManager>
           </HeaderProvider>
         </AuthProvider>

@@ -25,8 +25,8 @@ import {
 } from './dto';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { ReportsService } from '@/reports/reports.service';
-import { Request } from 'express';
 import { GetTopicsDto } from './dto/get-topics.dto';
+import { CreateTopicDto } from './dto/create-topic.dto';
 
 @Controller('debate')
 export class DebateController {
@@ -155,5 +155,11 @@ export class DebateController {
   @Delete('topic/:id')
   deleteTopic(@Param('id') topicId: string) {
     return this.debateService.deleteTopic(topicId);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('topics')
+  suggestTopic(@GetUser('id') userId: string, @Body() dto: CreateTopicDto) { // Você precisará criar o CreateTopicDto
+    return this.debateService.suggestTopic(userId, dto);
   }
 }

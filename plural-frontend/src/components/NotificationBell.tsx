@@ -50,7 +50,7 @@ export default function NotificationBell() {
   return (
     <div className="relative">
       <button onClick={() => setIsOpen(!isOpen)} className="relative text-gray-600 hover:text-[#2D4F5A]">
-        <FiBell size={24} />
+        <FiBell size={15} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
             {unreadCount}

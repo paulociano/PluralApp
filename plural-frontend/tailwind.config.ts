@@ -13,10 +13,27 @@ const config: Config = {
         lora: ['Lora', 'serif'],
         manrope: ['Manrope', 'sans-serif'],
       },
+      // --- ADICIONE ESTA SEÇÃO ---
+      // Aqui, customizamos os estilos aplicados pela classe 'prose'
+      typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': theme('colors.gray[800]'),
+            '--tw-prose-headings': theme('colors.gray[900]'),
+            'h1, h2, h3, h4, h5, h6': {
+              fontFamily: theme('fontFamily.lora'), // Aplica Lora a todos os títulos
+            },
+            p: {
+              fontFamily: theme('fontFamily.manrope'), // Garante Manrope para parágrafos
+            },
+            // Adicione outras customizações se desejar
+          },
+        },
+      }),
     },
   },
   plugins: [
-    typography
+    typography,
   ],
 };
 export default config;

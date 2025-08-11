@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '@/lib/api'; // Usando nossa instância centralizada do Axios
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 // Define a estrutura do usuário e do contexto
 type User = {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Efeito para carregar o usuário do localStorage ao iniciar a aplicação
   useEffect(() => {
+    
     const loadUserFromStorage = async () => {
       const storedToken = localStorage.getItem('plural_token');
       if (storedToken) {
@@ -68,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userResponse = await api.get('/users/me');
       setUser(userResponse.data);
       router.push('/');
+      toast.success('Login realizado com sucesso!');
     } catch (error) {
       console.error('Falha no login', error);
+      toast.error('Credenciais inválidas. Tente novamente.');
       throw error;
     }
   };
@@ -88,7 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userResponse = await api.get('/users/me');
       setUser(userResponse.data);
       
-      router.push('/'); // Redireciona para a home
+      router.push('/login');
+      toast.success(`Bem-vindo(a), ${name}! Sua conta foi criada.`);
     } catch (error) {
       console.error("Falha no cadastro:", error);
       throw error;
@@ -102,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('plural_token');
     delete api.defaults.headers.common['Authorization'];
     router.push('/login');
+    toast.success('Você saiu da sua conta.');
   };
 
   const value = { user, token, isLoading, login, signup, logout };

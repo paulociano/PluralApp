@@ -1,15 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ArgType } from '@prisma/client'; 
+import { AnalyzeArgumentDto } from './dto/analyze-argument.dto';
+
+// Exportamos este tipo para que possamos usá-lo no frontend e garantir consistência
+export type ArgumentAnalysis = {
+  clarity: { score: number; feedback: string };
+  bias: { score: number; feedback: string };
+  consistency: { score: number; feedback: string };
+};
 
 @Injectable()
 export class AiService {
   private genAI: GoogleGenerativeAI;
 
   constructor(private prisma: PrismaService) {
-    // Inicializa a IA com a chave do .env
+    // Inicializa a IA com a chave de API das variáveis de ambiente
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY não está definida no arquivo .env');
+    }
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
 
@@ -31,8 +40,8 @@ export class AiService {
 
     argumentsText += `Argumentos a Favor:\n${proArgs || 'Nenhum'}\n\n`;
     argumentsText += `Argumentos Contra:\n${contraArgs || 'Nenhum'}\n\n`;
-
-    // 3. Cria o prompt para a IA
+    
+    // 3. Cria o prompt (instrução) para a IA
     const prompt = `
       Você é um assistente analista de debates da plataforma "Plural". Sua tarefa é analisar a lista de argumentos de um debate e gerar um resumo claro e conciso para um novo usuário.
       O resumo deve ser em português do Brasil e ter EXATAMENTE DOIS PARÁGRAFOS:
@@ -43,9 +52,9 @@ export class AiService {
       Aqui estão os argumentos:
       ${argumentsText}
     `;
-
+    
     try {
-      // 4. Envia o prompt para a API do Gemini
+      // 4. Envia o prompt para a API do Gemini e retorna a resposta
       const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -55,6 +64,40 @@ export class AiService {
     } catch (error) {
       console.error("Erro na API do Gemini:", error);
       throw new InternalServerErrorException('Não foi possível gerar o resumo com a IA.');
+    }
+  }
+
+  async analyzeArgumentQuality(dto: AnalyzeArgumentDto): Promise<ArgumentAnalysis> {
+    const { content } = dto;
+    
+    const model = this.genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: 'application/json' }, // Força a saída a ser um JSON
+    });
+
+    const prompt = `
+      Você é um assistente especialista em lógica e debates, agindo como um "coach de argumentos".
+      Analise o argumento a seguir e retorne um objeto JSON com a seguinte estrutura: {"clarity": {"score": number, "feedback": string}, "bias": {"score": number, "feedback": string}, "consistency": {"score": number, "feedback": string}}.
+      
+      - O "score" deve ser um número inteiro de 1 (muito fraco) a 10 (excelente).
+      - O "feedback" deve ser uma frase curta, construtiva e em português do Brasil, explicando a pontuação.
+      - Clareza (clarity): Avalie se o argumento é fácil de entender, direto e bem articulado.
+      - Viés (bias): Avalie se o argumento usa linguagem neutra ou se apela para emoções, generalizações ou ataques pessoais.
+      - Consistência (consistency): Avalie se o argumento é logicamente consistente e não se contradiz.
+
+      Argumento para analisar: "${content}"
+    `;
+
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const jsonText = response.text();
+      
+      const analysis: ArgumentAnalysis = JSON.parse(jsonText);
+      return analysis;
+    } catch (error) {
+      console.error("Erro na API do Gemini ao analisar argumento:", error);
+      throw new InternalServerErrorException('Não foi possível analisar o argumento com a IA.');
     }
   }
 }

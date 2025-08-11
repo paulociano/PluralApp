@@ -10,6 +10,7 @@ import { ReportsModule } from './reports/reports.module';
 import { AdminModule } from './admin/admin.module';
 import { ArticlesModule } from './articles/articles.module';
 import { AiModule } from './ai/ai.module';
+import { TrainingModule } from './training/training.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AiModule } from './ai/ai.module';
     AdminModule,
     ArticlesModule,
     AiModule,
+    TrainingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

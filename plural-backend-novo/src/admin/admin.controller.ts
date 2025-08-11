@@ -40,4 +40,19 @@ export class AdminController {
       ReportStatus.DISMISSED,
     );
   }
+
+  @Get('topics/pending')
+  getPendingTopics() {
+    return this.adminService.getPendingTopics();
+  }
+
+  @Patch('topics/:id/approve')
+  approveTopic(@Param('id') topicId: string) {
+    return this.adminService.updateTopicStatus(topicId, 'APPROVED');
+  }
+
+  @Patch('topics/:id/reject')
+  rejectTopic(@Param('id') topicId: string) {
+    return this.adminService.updateTopicStatus(topicId, 'REJECTED');
+  }
 }

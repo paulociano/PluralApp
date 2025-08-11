@@ -32,7 +32,7 @@ const categories = Object.keys(categoryIcons) as TopicCategory[];
 
 export default function CategoryMenuBar({ selectedCategory, onSelectCategory }: CategoryMenuBarProps) {
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="border-b border-gray-200 bg-[#63A6A0]">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Usamos 'flex' para alinhar horizontalmente e 'overflow-x-auto' para rolagem em telas pequenas */}
         <div className="flex items-center justify-center space-x-4 py-2 overflow-x-auto whitespace-nowrap">

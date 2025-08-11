@@ -21,7 +21,9 @@ export class DebateService {
     includeArgumentCount?: boolean,
     includeParticipantCount?: boolean, // 1. Novo parâmetro
   ) {
-    const where: Prisma.TopicWhereInput = {};
+    const where: Prisma.TopicWhereInput = {
+      status: 'APPROVED'
+    };
     if (category) where.category = category;
     if (search) {
       where.OR = [
@@ -68,6 +70,22 @@ export class DebateService {
     return topics;
   }
 
+  async suggestTopic(userId: string, dto: { title: string; description: string; category: TopicCategory }) {
+    return this.prisma.topic.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        category: dto.category,
+        createdBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        status: 'PENDING', // O tópico é criado como pendente
+      },
+    });
+  }
+
   async getTopicById(topicId: string) {
     const topic = await this.prisma.topic.findUnique({
       where: { id: topicId },
@@ -78,9 +96,15 @@ export class DebateService {
     return topic;
   }
 
-  async findOrCreateFeaturedTopic() {
+    async findOrCreateFeaturedTopic() {
     const featuredTopic = await this.prisma.topic.findFirst();
     if (featuredTopic) return featuredTopic;
+
+    // Pega o primeiro usuário do banco para ser o autor do tópico de destaque
+    const firstUser = await this.prisma.user.findFirst();
+    if (!firstUser) {
+      throw new Error('Não há usuários no banco para criar o tópico de destaque.');
+    }
 
     return this.prisma.topic.create({
       data: {
@@ -89,6 +113,13 @@ export class DebateService {
         description:
           'Debata os prós e contras do avanço da IA no nosso dia a dia, carreira e relações sociais.',
         category: 'TECNOLOGIA',
+        status: 'APPROVED', // Aprovado por padrão
+        // CORREÇÃO AQUI: Associa o tópico ao primeiro usuário encontrado
+        createdBy: {
+          connect: {
+            id: firstUser.id,
+          },
+        },
       },
     });
   }

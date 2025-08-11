@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import Avatar from './Avatar';
 import Link from 'next/link';
+import TrainingTeaser from './TrainingTeaser';
 
 // Tipo para os dados do artigo
 type Article = {
@@ -11,6 +12,15 @@ type Article = {
   content: string;
   authorName: string;
   authorTitle: string | null;
+};
+
+// Função para remover tags HTML de uma string
+const stripHtml = (html: string) => {
+  if (typeof window !== 'undefined') {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  }
+  return html; // Fallback para o lado do servidor
 };
 
 export default function ColumnistArticles() {
@@ -52,8 +62,10 @@ export default function ColumnistArticles() {
               </h3>
             </Link>
             
-            <p className="font-manrope text-sm text-gray-600 line-clamp-3 whitespace-pre-wrap">
-              {article.content}
+            {/* --- CORREÇÃO AQUI --- */}
+            <p className="font-manrope text-sm text-gray-600 line-clamp-3">
+              {/* Usamos a função para exibir apenas o texto, sem as tags */}
+              {stripHtml(article.content)}
             </p>
 
             <div className="flex items-center space-x-3 mt-3">
@@ -66,6 +78,7 @@ export default function ColumnistArticles() {
           </article>
         ))}
       </div>
+       <TrainingTeaser />
     </aside>
   );
 }

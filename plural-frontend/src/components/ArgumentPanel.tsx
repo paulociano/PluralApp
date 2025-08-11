@@ -19,14 +19,12 @@ import ReplyForm from './ReplyForm';
 import ReportArgumentModal from './ReportArgumentModal';
 import Avatar from './Avatar';
 
-// --- Definição de Tipos ---
+// Tipos
 type Argument = {
   id: string;
   content: string;
   referenceUrl?: string | null;
-  author: {
-    username: string; id: string; name: string 
-};
+  author: { id: string; name: string; username: string | null; };
   votesCount: number;
   replyCount: number;
   topicId: string;
@@ -41,7 +39,6 @@ type ArgumentPanelProps = {
   onSelectArgument: (arg: Argument) => void;
 };
 
-// --- Componente Principal ---
 export default function ArgumentPanel({
   argument,
   onClose,
@@ -54,13 +51,11 @@ export default function ArgumentPanel({
   const [ancestors, setAncestors] = useState<Argument[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isRepliesCollapsed, setIsRepliesCollapsed] = useState(true); // Controla a seção de respostas
+  const [isRepliesCollapsed, setIsRepliesCollapsed] = useState(true);
 
   useEffect(() => {
     setLocalArgument(argument);
-    // Sempre que um novo argumento for selecionado, colapsa a seção de respostas por padrão
     setIsRepliesCollapsed(true);
-
     if (argument && token) {
       const fetchExtraData = async () => {
         try {
@@ -70,7 +65,7 @@ export default function ArgumentPanel({
           ]);
           setIsFavorited(favStatusResponse.data.isFavorited);
           setAncestors(ancestorsResponse.data);
-        } catch (error) {
+        } catch (error) { 
           console.error('Erro ao buscar dados do argumento:', error);
           setAncestors([]);
           setIsFavorited(false);
@@ -78,7 +73,7 @@ export default function ArgumentPanel({
       };
       fetchExtraData();
     } else {
-      setAncestors([]);
+      setAncestors([]); 
       setIsFavorited(false);
     }
   }, [argument, token]);
@@ -98,13 +93,24 @@ export default function ArgumentPanel({
     }
   };
 
+  // --- ALTERAÇÃO PRINCIPAL AQUI ---
   const handleReplySubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO', referenceUrl: string) => {
     if (!token || !localArgument) return;
     setIsSubmitting(true);
+
+    // Cria o objeto base com os dados obrigatórios
+    const payload = { 
+      content, 
+      type, 
+      topicId: localArgument.topicId, 
+      parentArgumentId: localArgument.id,
+      // Usa um "spread condicional" para adicionar a referenceUrl SÓ SE ela não estiver vazia
+      ...(referenceUrl.trim() && { referenceUrl }),
+    };
+
     try {
-      await api.post('/debate/argument', { content, type, topicId: localArgument.topicId, parentArgumentId: localArgument.id, referenceUrl, });
+      await api.post('/debate/argument', payload);
       onActionSuccess();
-      // Ao responder, expande a seção para mostrar o resultado
       setIsRepliesCollapsed(false);
     } catch (error) {
       console.error('Erro ao enviar resposta:', error);
@@ -112,7 +118,7 @@ export default function ArgumentPanel({
       setIsSubmitting(false);
     }
   };
-
+  
   const handleDelete = async () => {
     if (!token || !localArgument) return;
     if (window.confirm('Você tem certeza que deseja deletar este argumento?')) {
@@ -151,15 +157,14 @@ export default function ArgumentPanel({
   return (
     <>
       <div className="h-full bg-white shadow-lg flex flex-col border-l border-gray-200">
-        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-800">Detalhes do Argumento</h3>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 transition-colors" aria-label="Fechar painel de detalhes">
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50 shrink-0">
+          <h3 className="font-lora text-lg font-semibold text-gray-800">Detalhes do Argumento</h3>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
             <FiX className="w-6 h-6 text-gray-600" />
           </button>
         </div>
 
-        {/* Corpo principal com o conteúdo do argumento */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="flex-1 p-6 overflow-y-auto">
           {ancestors.length > 0 && (
             <nav className="flex items-center text-sm text-gray-500 mb-4 flex-wrap">
               {ancestors.map((anc) => (
@@ -173,38 +178,58 @@ export default function ArgumentPanel({
               <span className="font-semibold text-gray-800">Argumento Atual</span>
             </nav>
           )}
-          <div className='flex items-center space-x-3 mb-4'>
-          <Avatar name={localArgument.author.name} size={32} />
-          <p className="font-semibold text-gray-800">
-            {/* O link agora usa o 'username' do autor, se existir. 
-                Caso contrário (para usuários antigos que não definiram um), 
-                ele usa o 'id' como fallback. */}
-            de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
-              {localArgument.author.name}
-            </Link>
-          </p>
+          
+          <div className="flex items-center space-x-3 mb-4">
+            <Avatar name={localArgument.author.name} size={32} />
+            <p className="font-semibold text-gray-800 font-manrope">
+              de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
+                {localArgument.author.name}
+              </Link>
+            </p>
           </div>
-          <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+
+          <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg font-manrope">
             {localArgument.content}
           </p>
+
           {localArgument.referenceUrl && (
             <div className="mt-4">
               <a
                 href={localArgument.referenceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-[#63A6A0] hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-[#63A6A0] hover:underline font-manrope"
               >
                 <FiLink />
                 Fonte de Referência
               </a>
             </div>
           )}
+
+          <div className="mt-6">
+            <div
+              className="p-2 -mx-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+              onClick={toggleRepliesVisibility}
+            >
+              <div className="flex items-center text-sm text-gray-600">
+                <FiMessageSquare className="w-4 h-4 mr-2" />
+                <span className="font-semibold font-manrope">Respostas ({localArgument.replyCount})</span>
+                <span className="ml-auto font-medium text-[#63A6A0] font-manrope">
+                  {isRepliesCollapsed ? 'Mostrar' : 'Esconder'}
+                </span>
+              </div>
+            </div>
+            
+            {!isRepliesCollapsed && user && (
+              <div className="mt-2">
+                  <ReplyForm onSubmit={handleReplySubmit} isSubmitting={isSubmitting} />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Rodapé com as ações e a seção de respostas colapsável */}
-        <div className="p-6 border-t bg-gray-50">
-          <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+        <div className="p-6 border-t bg-gray-50 shrink-0">
+          <div className="flex justify-between items-center text-sm text-gray-600">
             <div className="flex items-center space-x-2">
               <button onClick={() => handleVote('UPVOTE')} className="p-1 rounded-full hover:bg-green-100" aria-label="Votar a favor">
                 <FiArrowUp className="w-5 h-5 text-green-600" />
@@ -224,28 +249,6 @@ export default function ArgumentPanel({
             </div>
           </div>
           
-          {/* Seção de controle para colapsar/expandir respostas */}
-          <div
-            className="mb-4 p-2 -mx-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
-            onClick={toggleRepliesVisibility}
-          >
-            <div className="flex items-center text-sm text-gray-600">
-              <FiMessageSquare className="w-4 h-4 mr-2" />
-              <span className="font-semibold">Respostas ({localArgument.replyCount})</span>
-              <span className="ml-auto font-medium text-[#63A6A0]">
-                {isRepliesCollapsed ? 'Mostrar' : 'Esconder'}
-              </span>
-            </div>
-          </div>
-          
-          {/* Renderização condicional do formulário de resposta */}
-          {!isRepliesCollapsed && user && (
-            <div className="mb-4">
-                <ReplyForm onSubmit={handleReplySubmit} isSubmitting={isSubmitting} />
-            </div>
-          )}
-
-          {/* Botão de deletar (se o usuário for o autor) */}
           {user && user.id === localArgument.author.id && (
             <div className="mt-4 border-t pt-4">
               <button onClick={handleDelete} className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 transition-colors">
@@ -256,7 +259,6 @@ export default function ArgumentPanel({
         </div>
       </div>
 
-      {/* Modal de denúncia */}
       {localArgument && (
         <ReportArgumentModal 
           isOpen={isReportModalOpen}

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ReportStatus } from '@prisma/client';
+import { ReportStatus, TopicStatus } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -51,6 +51,26 @@ export class AdminService {
       data: {
         status,
       },
+    });
+  }
+
+  async getPendingTopics() {
+    return this.prisma.topic.findMany({
+      where: { status: 'PENDING' },
+      include: { createdBy: { select: { name: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async updateTopicStatus(topicId: string, status: TopicStatus) {
+    const topic = await this.prisma.topic.findUnique({
+      where: { id: topicId },
+    });
+    if (!topic) throw new NotFoundException('Tópico não encontrado.');
+
+    return this.prisma.topic.update({
+      where: { id: topicId },
+      data: { status },
     });
   }
 }
