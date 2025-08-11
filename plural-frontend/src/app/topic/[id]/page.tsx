@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
@@ -6,7 +5,7 @@ import api from '@/lib/api';
 import { useHeader } from '@/context/HeaderContext';
 import DebateGraph from '@/components/DebateGraph';
 import { useAuth } from '@/context/AuthContext';
-import { FiArrowLeft, FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiChevronLeft, FiChevronRight, FiCpu, FiX } from 'react-icons/fi'; // Adicionados FiCpu e FiX
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import NewArgumentModal from '@/components/NewArgumentModal';
@@ -21,12 +20,18 @@ function TopicPageContent() {
   
   const { setIsTopicPage, setTopicActions } = useHeader();
 
+  // Estados da página
   const [topic, setTopic] = useState<any | null>(null);
   const [argumentsTree, setArgumentsTree] = useState<any[]>([]);
   const [isNewArgumentModalOpen, setIsNewArgumentModalOpen] = useState(false);
   const [selectedArgument, setSelectedArgument] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // 1. Novos estados para o resumo da IA
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
 
   const findArgumentInTree = (nodes: any[], argumentId: string): any | null => {
     for (const node of nodes) {
@@ -46,26 +51,36 @@ function TopicPageContent() {
         api.get(`/debate/topic/${topicId}`),
         api.get(`/debate/tree/${topicId}?page=${currentPage}&limit=100`),
       ]);
-      
       setTopic(topicResponse.data);
       setArgumentsTree(treeResponse.data.data);
       setTotalPages(treeResponse.data.lastPage || 1);
-
       const argumentIdFromUrl = searchParams.get('argumentId');
       if (argumentIdFromUrl) {
         const argumentToSelect = findArgumentInTree(treeResponse.data.data, argumentIdFromUrl);
-        if (argumentToSelect) {
-          setSelectedArgument(argumentToSelect);
-        }
+        if (argumentToSelect) setSelectedArgument(argumentToSelect);
       }
-      
     } catch (err) {
       console.error('Não foi possível carregar o debate.');
     }
   }, [topicId, searchParams, currentPage]);
 
+  // 2. Handler para gerar o resumo
+  const handleGenerateSummary = async () => {
+    setIsSummaryLoading(true);
+    setSummary(null);
+    setSummaryError('');
+    try {
+      const response = await api.get(`/ai/summarize/topic/${topicId}`);
+      setSummary(response.data.summary);
+    } catch (error: any) {
+      setSummaryError(error.response?.data?.message || 'Erro ao gerar resumo.');
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Efeito para enviar os botões para o Header principal
+    // 3. Efeito para enviar os botões (incluindo o da IA) para o Header
     setIsTopicPage(true);
     setTopicActions(
       <>
@@ -81,43 +96,61 @@ function TopicPageContent() {
             <FiChevronRight size={20} />
           </button>
         </div>
+        <button
+          onClick={handleGenerateSummary}
+          disabled={isSummaryLoading}
+          className="flex items-center space-x-2 bg-purple-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+        >
+          <FiCpu size={16} />
+          <span>{isSummaryLoading ? 'Analisando...' : 'Resumir com IA'}</span>
+        </button>
         <button onClick={() => setIsNewArgumentModalOpen(true)} className="flex items-center space-x-2 bg-[#63A6A0] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#2D4F5A]">
           <FiPlus size={16} />
           <span>Novo Argumento</span>
         </button>
       </>
     );
-
-    // Função de limpeza
     return () => {
       setIsTopicPage(false);
       setTopicActions(null);
     };
-  }, [setIsTopicPage, setTopicActions, currentPage, totalPages]);
+  }, [setIsTopicPage, setTopicActions, currentPage, totalPages, isSummaryLoading]);
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
+    if (user) fetchData();
   }, [fetchData, user]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <main className="flex-1 bg-white overflow-auto flex items-center justify-center relative">
-        {/* ---- ALTERAÇÃO AQUI: Removida a classe 'truncate' ---- */}
-        <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-center text-lg font-bold text-[#2D4F5A] max-w-2xl px-4">
-          {topic?.title}
-        </h1>
-        <DebateGraph argumentsTree={argumentsTree} onNodeClick={setSelectedArgument} />
-      </main>
+    <div className="flex h-screen overflow-hidden bg-gray-50 flex-col">
+      {/* 4. Div para exibir o resultado do resumo */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-4">
+        {summary && (
+          <div className="relative p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h3 className="font-lora font-bold text-purple-800 mb-2">Resumo do Debate por IA</h3>
+            <p className="font-manrope text-sm text-gray-700 whitespace-pre-wrap">{summary}</p>
+            <button onClick={() => setSummary(null)} className="absolute top-2 right-2 p-1 text-purple-500 hover:text-purple-800">
+              <FiX />
+            </button>
+          </div>
+        )}
+        {summaryError && <p className="text-red-500 p-4 bg-red-50 rounded-lg">{summaryError}</p>}
+      </div>
 
-      <div className={`transform transition-transform duration-300 ease-in-out ${selectedArgument ? 'w-full max-w-md' : 'w-0'}`}>
-        <ArgumentPanel
-          argument={selectedArgument}
-          onClose={() => setSelectedArgument(null)}
-          onActionSuccess={fetchData}
-          onSelectArgument={setSelectedArgument}
-        />
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1 bg-white overflow-auto flex items-center justify-center relative">
+          <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-center text-lg font-bold text-[#2D4F5A] max-w-2xl px-4 font-lora">
+            {topic?.title}
+          </h1>
+          <DebateGraph argumentsTree={argumentsTree} onNodeClick={setSelectedArgument} />
+        </main>
+        <div className={`transform transition-transform duration-300 ease-in-out ${selectedArgument ? 'w-full max-w-md' : 'w-0'}`}>
+          <ArgumentPanel
+            argument={selectedArgument}
+            onClose={() => setSelectedArgument(null)}
+            onActionSuccess={fetchData}
+            onSelectArgument={setSelectedArgument}
+          />
+        </div>
       </div>
       
       <NewArgumentModal isOpen={isNewArgumentModalOpen} onClose={() => setIsNewArgumentModalOpen(false)} topicId={topicId} onSuccess={fetchData} />
@@ -125,7 +158,7 @@ function TopicPageContent() {
   );
 }
 
-// Componente principal exportado que usa Suspense
+// Componente principal com Suspense
 export default function TopicPage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center">Carregando...</div>}>

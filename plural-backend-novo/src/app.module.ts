@@ -9,6 +9,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { AdminModule } from './admin/admin.module';
 import { ArticlesModule } from './articles/articles.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ArticlesModule } from './articles/articles.module';
     ReportsModule,
     AdminModule,
     ArticlesModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
