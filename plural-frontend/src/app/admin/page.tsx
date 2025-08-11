@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ArticleEditorModal from '@/components/ArticleEditorModal'; // Importa o novo modal
+import { FiEye } from 'react-icons/fi';
 
 // Tipos
 type Report = {
@@ -139,6 +140,9 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="p-2 flex gap-2">
+                      <Link href={`/article/${article.id}`} target="_blank" className="text-blue-500 hover:text-blue-700 cursor-pointer">
+                        <FiEye size={20} />
+                      </Link>
                       <button onClick={() => handleOpenEditModal(article)} className="text-blue-600 hover:underline text-sm">Editar</button>
                       <button onClick={() => handleDeleteArticle(article.id)} className="text-red-600 hover:underline text-sm">Deletar</button>
                     </td>
