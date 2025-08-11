@@ -1,5 +1,5 @@
 import { ArgType } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class CreateArgumentDto {
   @IsString()
@@ -17,4 +17,8 @@ export class CreateArgumentDto {
   @IsString()
   @IsOptional()
   parentArgumentId?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'Por favor, insira uma URL válida.' })
+  referenceUrl?: string;
 }

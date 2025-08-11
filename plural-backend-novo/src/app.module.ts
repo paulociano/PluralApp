@@ -7,6 +7,8 @@ import { DebateModule } from './debate/debate.module';
 import { UsersModule } from './users/users.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
+import { AdminModule } from './admin/admin.module';
+import { ArticlesModule } from './articles/articles.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ReportsModule } from './reports/reports.module';
     UsersModule,
     NotificationsModule,
     ReportsModule,
+    AdminModule,
+    ArticlesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

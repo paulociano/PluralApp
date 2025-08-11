@@ -53,15 +53,17 @@ export class DebateController {
     return this.debateService.toggleFavorite(userId, argumentId);
   }
 
-  @Get('topics')
+   @Get('topics')
   getAllTopics(@Query() dto: GetTopicsDto) {
-    // Converte o parâmetro de string 'true' para um booleano real
     const shouldIncludeCount = dto.includeArgumentCount === 'true';
+    // 1. Leia o novo parâmetro
+    const shouldIncludeParticipantCount = dto.includeParticipantCount === 'true';
 
     return this.debateService.getAllTopics(
       dto.category,
       dto.search,
-      shouldIncludeCount, // Passa o valor booleano para o serviço
+      shouldIncludeCount,
+      shouldIncludeParticipantCount, // 2. Passe para o serviço
     );
   }
 

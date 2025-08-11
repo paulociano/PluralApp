@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import NotificationBell from './NotificationBell';
 import Avatar from './Avatar';
+import { FiShield } from 'react-icons/fi';
 
 export default function Header() {
   const { user, logout, isLoading } = useAuth();
@@ -41,17 +42,32 @@ export default function Header() {
           <div className="flex items-center space-x-4 min-h-[40px]">
             {!isLoading && user && (
               <>
-                <NotificationBell />
-                <Avatar name={user.name} size={32} />
-                <Link href={`/profile/${user.username}`} className="text-gray-700 hidden sm:block hover:text-[#2D4F5A] transition-colors">
-                  Olá, {user.name}
-                </Link>
-                <button
-                  onClick={logout}
-                  className="bg-[#63A6A0] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#2D4F5A] transition-colors"
-                >
-                  Sair
-                </button>
+                {/* Agrupamos os ícones para garantir alinhamento consistente */}
+                <div className="flex items-center space-x-4">
+                  {user.role === 'ADMIN' && (
+                    <Link href="/admin" title="Painel do Admin" className="text-gray-500 hover:text-[#2D4F5A]">
+                      <FiShield size={22} />
+                    </Link>
+                  )}
+                </div>
+
+                {/* Separador visual */}
+                <div className="w-px h-6 bg-gray-200 hidden sm:block"></div>
+
+                {/* Agrupamos o perfil e o botão de sair */}
+                <div className="flex items-center space-x-3">
+                  <Link href={`/profile/${user.username || user.id}`} className="flex items-center space-x-2 text-gray-700 hover:text-[#2D4F5A] transition-colors rounded-full p-1">
+                    <Avatar name={user.name} size={32} />
+                    <span className="hidden sm:block font-medium">{user.name}</span>
+                  </Link>
+                  <NotificationBell />
+                  <button
+                    onClick={logout}
+                    className="bg-[#63A6A0] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#2D4F5A] transition-colors"
+                  >
+                    Sair
+                  </button>
+                </div>
               </>
             )}
             {!isLoading && !user && (

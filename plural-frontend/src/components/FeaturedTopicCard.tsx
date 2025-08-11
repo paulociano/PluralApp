@@ -7,7 +7,8 @@ type Topic = {
   title: string;
   description: string;
   category: string;
-  _count?: { arguments: number }; // Usaremos a contagem que já existe
+  _count?: { arguments: number };
+  participantCount?: number;
 };
 
 type FeaturedTopicCardProps = {
@@ -25,10 +26,9 @@ export default function FeaturedTopicCard({ topic }: FeaturedTopicCardProps) {
           <FiMessageSquare className="mr-2 text-[#63A6A0]" />
           <span>{topic._count?.arguments || 0} Argumentos</span>
         </div>
-        {/* Placeholder para contagem de participantes, uma funcionalidade futura */}
         <div className="flex items-center">
           <FiUsers className="mr-2 text-[#63A6A0]" />
-          <span>15 Participantes (Exemplo)</span>
+          <span>{topic.participantCount || 0} Participantes</span>
         </div>
       </div>
       <Link

@@ -15,52 +15,58 @@ import { PaginationDto } from '@/common/dto/pagination.dto';
 export class DebateService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllTopics(
+   async getAllTopics(
     category?: TopicCategory,
     search?: string,
     includeArgumentCount?: boolean,
+    includeParticipantCount?: boolean, // 1. Novo parâmetro
   ) {
     const where: Prisma.TopicWhereInput = {};
-
-    if (category) {
-      where.category = category;
-    }
-
+    if (category) where.category = category;
     if (search) {
       where.OR = [
-        {
-          title: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          description: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ];
     }
     
     const queryOptions: Prisma.TopicFindManyArgs = {
       where,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     };
 
     if (includeArgumentCount) {
-      queryOptions.include = {
-        _count: {
-          select: { arguments: true },
-        },
-      };
+      queryOptions.include = { _count: { select: { arguments: true } } };
     }
 
-    return this.prisma.topic.findMany(queryOptions);
-  }
+    // Busca inicial dos tópicos
+    const topics = await this.prisma.topic.findMany(queryOptions);
 
+    // 2. Se a contagem de participantes for solicitada, execute a lógica
+    if (includeParticipantCount && topics.length > 0) {
+      const topicIds = topics.map(t => t.id);
+
+      // Agrupa os argumentos por tópico e autor para encontrar participantes únicos
+      const distinctAuthorsByTopic = await this.prisma.argument.groupBy({
+        by: ['topicId', 'authorId'],
+        where: { topicId: { in: topicIds } },
+      });
+
+      // Conta quantos autores únicos existem para cada tópico
+      const participantCounts = distinctAuthorsByTopic.reduce((acc, current) => {
+        acc[current.topicId] = (acc[current.topicId] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Adiciona a contagem a cada objeto de tópico
+      return topics.map(topic => ({
+        ...topic,
+        participantCount: participantCounts[topic.id] || 0,
+      }));
+    }
+
+    return topics;
+  }
 
   async getTopicById(topicId: string) {
     const topic = await this.prisma.topic.findUnique({

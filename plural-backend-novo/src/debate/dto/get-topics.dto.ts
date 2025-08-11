@@ -1,15 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { IsOptional, IsString, IsEnum, IsBooleanString } from 'class-validator';
 import { TopicCategory } from '@prisma/client';
-import { IsBooleanString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class GetTopicsDto {
-  @IsEnum(TopicCategory)
   @IsOptional()
+  @IsEnum(TopicCategory)
   category?: TopicCategory;
 
-  @IsString() // <-- Adicione
-  @IsOptional() // <-- Adicione
-  search?: string; // <-- Adicione
-  @IsBooleanString() // Valida se é 'true' ou 'false'
+  @IsOptional()
+  @IsString()
+  search?: string;
+  
+  @IsOptional()
+  @IsBooleanString({
+    message: 'O valor de includeArgumentCount deve ser "true" ou "false".'
+  })
   includeArgumentCount?: string;
+  
+  @IsOptional()
+  @IsBooleanString({
+    message: 'O valor de includeParticipantCount deve ser "true" ou "false".'
+  })
+  includeParticipantCount?: string;
 }

@@ -31,3 +31,19 @@ body {
   color: var(--foreground);
   font-family:'Manrope'
 }
+
+/* Estilos para o editor Tiptap */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Estilo para o botão ativo na toolbar do Tiptap */
+.is-active {
+  background-color: #e9ecef;
+  font-weight: bold;
+  border-radius: 4px;
+}

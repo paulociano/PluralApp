@@ -26,6 +26,7 @@ model User {
   favoriteArguments FavoriteArgument[]
   badges            UserBadge[]
   points            Int                @default(0)
+  role              Role               @default(USER)
 }
 
 model Topic {
@@ -54,6 +55,7 @@ model Argument {
   votes            Vote[]
   reports          Report[]           @relation("ReportedArgument")
   favoritedBy      FavoriteArgument[]
+  referenceUrl     String?
 
   Notification Notification[] @relation("OriginArgumentNotifications")
 }
@@ -129,6 +131,17 @@ model UserBadge {
   @@unique([userId, badgeId])
 }
 
+model Article {
+  id             String   @id @default(cuid())
+  title          String
+  content        String   @db.Text
+  authorName     String
+  authorTitle    String?  // Ex: "Filósofo e Escritor"
+  authorImageUrl String?
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
 enum ArgType {
   PRO
   CONTRA
@@ -138,6 +151,11 @@ enum ArgType {
 enum VoteType {
   UPVOTE
   DOWNVOTE
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum NotificationType {

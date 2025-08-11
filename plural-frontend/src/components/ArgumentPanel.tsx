@@ -12,6 +12,7 @@ import {
   FiBookmark,
   FiFlag,
   FiMessageSquare,
+  FiLink,
 } from 'react-icons/fi';
 import api from '@/lib/api';
 import ReplyForm from './ReplyForm';
@@ -22,6 +23,7 @@ import Avatar from './Avatar';
 type Argument = {
   id: string;
   content: string;
+  referenceUrl?: string | null;
   author: {
     username: string; id: string; name: string 
 };
@@ -96,11 +98,11 @@ export default function ArgumentPanel({
     }
   };
 
-  const handleReplySubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO') => {
+  const handleReplySubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO', referenceUrl: string) => {
     if (!token || !localArgument) return;
     setIsSubmitting(true);
     try {
-      await api.post('/debate/argument', { content, type, topicId: localArgument.topicId, parentArgumentId: localArgument.id });
+      await api.post('/debate/argument', { content, type, topicId: localArgument.topicId, parentArgumentId: localArgument.id, referenceUrl, });
       onActionSuccess();
       // Ao responder, expande a seção para mostrar o resultado
       setIsRepliesCollapsed(false);
@@ -185,6 +187,19 @@ export default function ArgumentPanel({
           <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
             {localArgument.content}
           </p>
+          {localArgument.referenceUrl && (
+            <div className="mt-4">
+              <a
+                href={localArgument.referenceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#63A6A0] hover:underline"
+              >
+                <FiLink />
+                Fonte de Referência
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Rodapé com as ações e a seção de respostas colapsável */}
