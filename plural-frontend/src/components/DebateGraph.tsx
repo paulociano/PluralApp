@@ -1,18 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import ArgumentModal from './ArgumentModal';
-
-// Tipos de dados
-type ArgumentData = { id: string; content: string; author: { id: string; name: string; }; votesCount: number; replyCount: number; parentArgumentId: string | null; topicId: string; type: 'PRO' | 'CONTRA' | 'NEUTRO'; replies?: ArgumentData[] };
-type Node = d3.SimulationNodeDatum & { id: string; data: ArgumentData };
-type Link = { source: any; target: any };
-
-type DebateGraphProps = {
-  argumentsTree: ArgumentData[];
-  onNodeClick: (argument: ArgumentData) => void;
-};
+import { ArgumentData, Node, DebateGraphProps, Link } from '@/types';
 
 const colors = {
   rootArgument: '#2D4F5A',

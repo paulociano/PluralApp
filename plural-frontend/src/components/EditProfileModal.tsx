@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import api from '@/lib/api';
 import { FiX } from 'react-icons/fi';
-
-type UserProfile = { name: string; username?: string | null; bio?: string | null; };
-type EditProfileModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  currentUser: UserProfile;
-};
+import { EditProfileModalProps } from '@/types';
 
 export default function EditProfileModal({ isOpen, onClose, onSuccess, currentUser }: EditProfileModalProps) {
   const [name, setName] = useState(currentUser.name);

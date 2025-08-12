@@ -5,15 +5,8 @@ import { useState, FormEvent } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { FiX } from 'react-icons/fi';
+import { ModalProps } from '@/types';
 
-type ModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-};
-
-// 1. REMOVEMOS A IMPORTAÇÃO DO @prisma/client
-// Em vez disso, definimos as categorias diretamente no frontend.
-// Esta lista deve ser idêntica ao seu enum 'TopicCategory' no schema.prisma.
 const categories = [
   'TECNOLOGIA',
   'SOCIEDADE',
@@ -24,7 +17,7 @@ const categories = [
   'OUTRO',
 ] as const; // 'as const' garante que os tipos sejam literais de string
 
-type TopicCategory = typeof categories[number]; // Cria um tipo a partir do array
+import { TopicCategory } from '@/types';
 
 export default function SuggestTopicModal({ isOpen, onClose }: ModalProps) {
   const [title, setTitle] = useState('');

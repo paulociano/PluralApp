@@ -15,11 +15,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useEffect } from 'react';
 import { $getRoot, $insertNodes } from 'lexical';
 import ToolbarPlugin from './ToolbarPlugin';
-
-type EditorProps = {
-  onChange: (html: string) => void;
-  initialHtml?: string;
-};
+import { EditorProps } from '@/types';
 
 // Componente interno para carregar o conteúdo HTML inicial
 function InitialStatePlugin({ initialHtml }: { initialHtml?: string }) {

@@ -1,12 +1,8 @@
 'use client';
 
 import { FiSearch } from 'react-icons/fi';
+import { SearchBarProps } from '@/types';
 
-// O componente agora aceita 'value' e o passa para o input
-type SearchBarProps = {
-  onSearch: (query: string) => void;
-  value: string;
-};
 
 export default function SearchBar({ onSearch, value }: SearchBarProps) {
   return (

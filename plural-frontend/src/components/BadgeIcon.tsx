@@ -1,11 +1,7 @@
 import { IconType } from 'react-icons';
 import { FiAward, FiFeather, FiGitMerge, FiMessageCircle, FiThumbsUp } from 'react-icons/fi';
+import { BadgeIconProps } from '@/types';
 
-type BadgeIconProps = {
-iconName: string;
-size?: number;
-className?: string;
-};
 
 const iconMap: Record<string, IconType> = {
 FiFeather: FiFeather,

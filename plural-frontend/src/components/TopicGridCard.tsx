@@ -8,9 +8,9 @@ import {
   SunIcon,
   BeakerIcon,
   TagIcon,
-  ChatBubbleLeftEllipsisIcon // Trocamos FiMessageSquare por este para consistência
+  ChatBubbleLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
-import { TopicCategory } from '@prisma/client';
+import { TopicCategory } from '@/types';
 
 // O mapa de ícones que traduz o nome da categoria para um componente de ícone
 const categoryIcons: Record<TopicCategory, React.ComponentType<{ className: string }>> = {
@@ -22,18 +22,8 @@ const categoryIcons: Record<TopicCategory, React.ComponentType<{ className: stri
   CIENCIA: BeakerIcon,
   OUTRO: TagIcon
 };
+import { TopicGridCardProps } from '@/types';
 
-type Topic = {
-  id: string;
-  title: string;
-  description: string;
-  category: TopicCategory;
-  _count?: { arguments: number };
-};
-
-type TopicGridCardProps = {
-  topic: Topic;
-};
 
 export default function TopicGridCard({ topic }: TopicGridCardProps) {
   // 2. Lógica de seleção do ícone. Usamos TagIcon como um fallback seguro.

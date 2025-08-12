@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 
-type Fallacy = { id: string; name: string; description: string };
-type Exercise = { id: string; text: string };
-type Feedback = { isCorrect: boolean; explanation: string };
+import {
+  Fallacy,
+  Exercise,
+  Feedback,
+} from '@/types';
 
 export default function TrainingPage() {
   const [exercise, setExercise] = useState<Exercise | null>(null);
@@ -52,7 +54,7 @@ export default function TrainingPage() {
       {exercise ? (
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="font-semibold mb-4">Analise o texto a seguir:</p>
-          <p className="italic bg-gray-50 p-4 rounded mb-6">"{exercise.text}"</p>
+          <p className="italic bg-gray-50 p-4 rounded mb-6">{exercise.text}</p>
           
           <p className="font-semibold mb-4">Qual falácia lógica está presente?</p>
           <div className="space-y-3">

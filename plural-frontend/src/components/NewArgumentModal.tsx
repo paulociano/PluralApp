@@ -6,13 +6,7 @@ import { Fragment, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import ReplyForm from './ReplyForm'; // Reutilizamos o formulário
-
-type NewArgumentModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  topicId: string | null;
-  onSuccess: () => void;
-};
+import { NewArgumentModalProps } from '@/types';
 
 export default function NewArgumentModal({
   isOpen,

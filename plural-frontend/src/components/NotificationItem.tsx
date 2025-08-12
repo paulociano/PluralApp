@@ -2,22 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-
-type Notification = {
-  id: string;
-  isRead: boolean;
-  createdAt: string;
-  triggerUser: { name: string };
-  originArgumentId: string;
-  originArgument?: { topicId: string };
-};
-
-// 1. Atualize as props para incluir a nova função
-type NotificationItemProps = {
-  notification: Notification;
-  onNotificationRead: (notificationId: string) => void;
-  onItemClick: () => void; // Função para fechar o menu
-};
+import { NotificationItemProps } from '@/types';
 
 export default function NotificationItem({ notification, onNotificationRead, onItemClick }: NotificationItemProps) {
   const router = useRouter();

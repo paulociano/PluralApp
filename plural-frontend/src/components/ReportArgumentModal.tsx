@@ -5,13 +5,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
-
-type ReportArgumentModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  argumentId: string;
-};
+import { ReportArgumentModalProps } from '@/types';
 
 // As razões devem corresponder ao seu enum `ReportReason` no `schema.prisma`
 const reportReasons = [

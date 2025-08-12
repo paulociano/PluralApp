@@ -20,25 +20,7 @@ import ReplyForm from './ReplyForm';
 import ReportArgumentModal from './ReportArgumentModal';
 import Avatar from './Avatar';
 import { motion } from 'framer-motion';
-
-type Argument = {
-  id: string;
-  content: string;
-  referenceUrl?: string | null;
-  author: { id: string; name: string; username: string | null; };
-  votesCount: number;
-  replyCount: number;
-  topicId: string;
-  parentArgumentId: string | null;
-  type: 'PRO' | 'CONTRA' | 'NEUTRO';
-};
-
-type ArgumentPanelProps = {
-  argument: Argument | null;
-  onClose: () => void;
-  onActionSuccess: () => void;
-  onSelectArgument: (arg: Argument) => void;
-};
+import { Argument, ArgumentPanelProps } from '@/types';
 
 export default function ArgumentPanel({
   argument,

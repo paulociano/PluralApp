@@ -6,14 +6,9 @@ import Avatar from '@/components/Avatar';
 import Link from 'next/link';
 import { FiArrowLeft } from 'react-icons/fi';
 
-type Article = {
-  id: string;
-  title: string;
-  content: string;
-  authorName: string;
-  authorTitle: string | null;
-  createdAt: string;
-};
+import {
+  Article,
+} from '@/types';
 
 function ArticlePageContent() {
   const params = useParams();

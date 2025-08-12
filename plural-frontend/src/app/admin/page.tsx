@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
@@ -8,31 +9,11 @@ import ArticleEditorModal from '@/components/ArticleEditorModal';
 import toast from 'react-hot-toast';
 import { FiEdit, FiTrash, FiEye, FiPlus } from 'react-icons/fi'; // 1. Importe o ícone FiEye
 
-// Tipos
-type Report = {
-  id: string;
-  reason: string;
-  notes: string | null;
-  createdAt: string;
-  reporter: { name: string; username: string | null };
-  reportedArgument: { id: string; content: string; authorId: string };
-};
-
-type Article = {
-  id: string;
-  title: string;
-  content: string;
-  authorName: string;
-  authorTitle: string | null;
-  published: boolean;
-};
-
-type PendingTopic = {
-  id: string;
-  title: string;
-  createdAt: string;
-  createdBy: { name: string; username: string | null; };
-};
+import {
+  Article,
+  Report,
+  PendingTopic,
+} from '@/types';
 
 export default function AdminPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -147,7 +128,7 @@ export default function AdminPage() {
                 reports.map(report => (
                   <div key={report.id} className="bg-gray-50 p-4 rounded-lg shadow border">
                     <p className="font-semibold">Argumento Denunciado:</p>
-                    <p className="italic text-gray-700 bg-gray-100 p-2 rounded my-2">"{report.reportedArgument.content}"</p>
+                    <p className="italic text-gray-700 bg-gray-100 p-2 rounded my-2">{report.reportedArgument.content}</p>
                     <div className="text-sm space-y-1">
                       <p><strong>Motivo:</strong> {report.reason}</p>
                       {report.notes && <p><strong>Notas Adicionais:</strong> {report.notes}</p>}

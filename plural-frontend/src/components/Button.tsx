@@ -1,7 +1,6 @@
 
 import React from 'react';
-
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+import { ButtonProps } from '@/types';
 
 export default function Button({ children, className, ...props }: ButtonProps) {
   return (

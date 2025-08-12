@@ -4,18 +4,7 @@ import { useState } from 'react';
 import api from '@/lib/api';
 import Button from '@/components/Button';
 import { FiCpu } from 'react-icons/fi';
-
-// Este tipo pode ser movido para um arquivo compartilhado se for usado em outros lugares
-type ArgumentAnalysis = {
-  clarity: { score: number; feedback: string };
-  bias: { score: number; feedback: string };
-  consistency: { score: number; feedback: string };
-};
-
-type ReplyFormProps = {
-  onSubmit: (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO', referenceUrl: string) => void;
-  isSubmitting: boolean;
-};
+import { ReplyFormProps, ArgumentAnalysis } from '@/types';
 
 // Componente para exibir os resultados da análise da IA
 const AnalysisResult = ({ analysis }: { analysis: ArgumentAnalysis }) => {

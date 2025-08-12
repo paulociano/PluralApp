@@ -12,42 +12,10 @@ import BadgeIcon from '@/components/BadgeIcon';
 import EditProfileModal from '@/components/EditProfileModal';
 
 // --- DEFINIÇÃO DE TIPOS ---
-type Argumento = {
-  id: string;
-  content: string;
-  createdAt: string;
-  topic: { id: string; title: string; };
-};
-
-type ArgumentoFavorito = {
-  id: string;
-  argument: Argumento;
-};
-
-type Badge = {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-};
-
-type UserBadge = {
-  id: string;
-  badge: Badge;
-};
-
-type ProfileData = {
-  id: string;
-  name: string;
-  username: string | null;
-  bio: string | null;
-  createdAt: string;
-  points: number;
-  _count: { arguments: number; votes: number; };
-  recentArguments: Argumento[];
-  badges: UserBadge[];
-  allBadges?: Badge[]; // Opcional, para o "Empty State"
-};
+import {
+  ProfileData,
+  ArgumentoFavorito,
+} from '@/types';
 
 function ProfilePageContent() {
   const params = useParams();
@@ -222,7 +190,7 @@ function ProfilePageContent() {
                   <div key={arg.id} className="p-4 border border-gray-200 rounded-lg bg-white flex items-start space-x-4 transition-shadow hover:shadow-md">
                     <FiMessageSquare className="text-[#2D4F5A] flex-shrink-0 mt-1" />
                     <div>
-                      <p className="font-manrope text-sm text-gray-800 line-clamp-2">"{arg.content}"</p>
+                      <p className="font-manrope text-sm text-gray-800 line-clamp-2">{arg.content}</p>
                       <div className="text-xs text-gray-500 mt-2">
                         Em <Link href={`/topic/${arg.topic.id}?argumentId=${arg.id}`} className="font-semibold text-[#63A6A0] hover:underline">
                           {arg.topic.title}
@@ -244,7 +212,7 @@ function ProfilePageContent() {
                 <div key={fav.id} className="p-4 border border-gray-200 rounded-lg bg-white flex items-start space-x-4 transition-shadow hover:shadow-md">
                   <FiBookmark className="text-yellow-500 flex-shrink-0 mt-1" />
                   <div>
-                    <p className="font-manrope text-sm text-gray-800 line-clamp-2">"{fav.argument.content}"</p>
+                    <p className="font-manrope text-sm text-gray-800 line-clamp-2">{fav.argument.content}</p>
                     <div className="text-xs text-gray-500 mt-2">
                       No tópico <Link href={`/topic/${fav.argument.topic.id}?argumentId=${fav.argument.id}`} className="font-semibold text-[#63A6A0] hover:underline">
                         {fav.argument.topic.title}

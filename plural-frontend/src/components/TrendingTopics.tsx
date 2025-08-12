@@ -1,18 +1,7 @@
 // Arquivo: src/components/TrendingTopics.tsx
 'use client';
 import Link from 'next/link';
-
-type Topic = {
-  id: string;
-  title: string;
-  _count: {
-    arguments: number;
-  };
-};
-
-type TrendingTopicsProps = {
-  topics: Topic[];
-};
+import { TrendingTopicsProps } from '@/types';
 
 export default function TrendingTopics({ topics }: TrendingTopicsProps) {
   return (

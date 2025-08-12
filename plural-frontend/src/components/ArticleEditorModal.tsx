@@ -4,10 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import api from '@/lib/api';
 import { FiX } from 'react-icons/fi';
 import LexicalEditor from './LexicalEditor';
-
-// Tipos e Props
-type Article = { id: string; title: string; content: string; authorName: string; authorTitle: string | null; published: boolean; };
-type ModalProps = { isOpen: boolean; onClose: () => void; onSuccess: () => void; articleToEdit: Article | null; };
+import { ModalProps } from '@/types';
 
 export default function ArticleEditorModal({ isOpen, onClose, onSuccess, articleToEdit }: ModalProps) {
   const [title, setTitle] = useState('');

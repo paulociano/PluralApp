@@ -5,15 +5,7 @@ import Avatar from './Avatar';
 import Link from 'next/link';
 import TrainingTeaser from './TrainingTeaser';
 import TopContributors from './TopContributors';
-
-// Tipo para os dados do artigo
-type Article = {
-  id: string;
-  title: string;
-  content: string;
-  authorName: string;
-  authorTitle: string | null;
-};
+import { Article } from '@/types';
 
 // Função para remover tags HTML de uma string
 const stripHtml = (html: string) => {

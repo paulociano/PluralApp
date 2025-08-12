@@ -11,12 +11,9 @@ import {
   BeakerIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
-import { TopicCategory } from '@prisma/client';
 
-type CategoryMenuBarProps = {
-  selectedCategory: string | null;
-  onSelectCategory: (category: string | null) => void;
-};
+import { TopicCategory } from '@/types';
+import { CategoryMenuBarProps } from '@/types';
 
 const categoryIcons: Record<TopicCategory, React.ComponentType<{ className: string }>> = {
   TECNOLOGIA: CpuChipIcon,

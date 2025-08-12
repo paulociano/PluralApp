@@ -1,19 +1,6 @@
 import Link from 'next/link';
 import { FiMessageSquare, FiUsers } from 'react-icons/fi';
-
-// Adapte o tipo 'Topic' conforme necessário se tiver mais dados
-type Topic = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  _count?: { arguments: number };
-  participantCount?: number;
-};
-
-type FeaturedTopicCardProps = {
-  topic: Topic;
-};
+import { FeaturedTopicCardProps } from '@/types';
 
 export default function FeaturedTopicCard({ topic }: FeaturedTopicCardProps) {
   return (
