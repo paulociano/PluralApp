@@ -8,15 +8,18 @@ import TrendingTopics from '@/components/TrendingTopics';
 import FeaturedTopicCard from '@/components/FeaturedTopicCard';
 import TopicGridCard from '@/components/TopicGridCard';
 import ColumnistArticles from '@/components/ColumnistArticles';
-import SuggestTopicModal from '@/components/SuggestTopicModal'; // Importe o modal
+import SuggestTopicModal from '@/components/SuggestTopicModal';
 import { FiPlus } from 'react-icons/fi';
+// A importação do @prisma/client foi removida
 
-// Tipos
+// O tipo agora é uma união de strings literais
+type TopicCategory = 'TECNOLOGIA' | 'SOCIEDADE' | 'CULTURA' | 'POLITICA' | 'MEIO_AMBIENTE' | 'CIENCIA' | 'OUTRO';
+
 type Topic = {
   id: string;
   title: string;
   description: string;
-  category: any;
+  category: TopicCategory;
   _count: { arguments: number };
   participantCount?: number;
 };
@@ -27,8 +30,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // A única declaração correta para o estado do modal
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   useEffect(() => {
@@ -69,7 +70,6 @@ export default function HomePage() {
         
         <div className="max-w-screen-xl mx-auto flex">
           <ColumnistArticles />
-
           <main className="flex-1 p-8">
             <header className="mb-8">
               <div className="flex justify-between items-start">
@@ -87,6 +87,7 @@ export default function HomePage() {
               </div>
             </header>
 
+            {/* O SearchBar agora recebe e exibe o valor do estado searchQuery */}
             <SearchBar onSearch={setSearchQuery} value={searchQuery} />
             
             <div className="mt-8">
@@ -118,7 +119,6 @@ export default function HomePage() {
           <TrendingTopics topics={trendingTopics} />
         </div>
       </div>
-
       <SuggestTopicModal 
         isOpen={isSuggestModalOpen}
         onClose={() => setIsSuggestModalOpen(false)}

@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client'; // Importação necessária para o tipo de erro
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
+import { ConfigService } from '@nestjs/config';
 
 // Função auxiliar para criar um "slug" amigável para a URL
 function createSlug(text: string): string {
@@ -26,6 +27,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private config: ConfigService,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -86,7 +88,7 @@ export class AuthService {
       sub: userId,
       email,
     };
-    const secret = 'SUPER_SECRET_KEY'; // Em produção, use uma variável de ambiente
+    const secret = this.config.get<string>('JWT_SECRET');
 
     const token = await this.jwtService.signAsync(payload, {
       expiresIn: '60m',

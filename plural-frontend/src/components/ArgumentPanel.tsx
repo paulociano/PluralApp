@@ -19,6 +19,7 @@ import api from '@/lib/api';
 import ReplyForm from './ReplyForm';
 import ReportArgumentModal from './ReportArgumentModal';
 import Avatar from './Avatar';
+import { motion } from 'framer-motion';
 
 type Argument = {
   id: string;
@@ -241,13 +242,31 @@ export default function ArgumentPanel({
         <div className="p-6 border-t bg-gray-50 shrink-0">
           <div className="flex justify-between items-center text-sm text-gray-600">
             <div className="flex items-center space-x-2">
-              <button onClick={() => handleVote('UPVOTE')} className="p-1 rounded-full hover:bg-green-100" aria-label="Votar a favor">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleVote('UPVOTE')}
+                className="p-1 rounded-full hover:bg-green-100"
+                aria-label="Votar a favor"
+              >
                 <FiArrowUp className="w-5 h-5 text-green-600" />
-              </button>
-              <span className="font-bold text-lg text-gray-800">{localArgument.votesCount}</span>
-              <button onClick={() => handleVote('DOWNVOTE')} className="p-1 rounded-full hover:bg-red-100" aria-label="Votar contra">
+              </motion.button>
+               <motion.span
+                key={localArgument.votesCount}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                className="font-bold text-lg text-gray-800 w-8 text-center"
+              >
+                {localArgument.votesCount}
+              </motion.span>
+               <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleVote('DOWNVOTE')}
+                className="p-1 rounded-full hover:bg-red-100"
+                aria-label="Votar contra"
+              >
                 <FiArrowDown className="w-5 h-5 text-red-600" />
-              </button>
+              </motion.button>
             </div>
             <div className="flex items-center space-x-3">
               <button onClick={handleToggleFavorite} className="text-gray-400 hover:text-[#63A6A0] transition-colors" aria-label={isFavorited ? 'Desfavoritar argumento' : 'Favoritar argumento'}>

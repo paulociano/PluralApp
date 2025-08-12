@@ -1,10 +1,19 @@
 // Arquivo: src/users/users.controller.ts
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { GetUser } from '@/auth/decorator/get-user.decorator';
 import { JwtGuard } from '@/auth/guard/jwt.guard';
 import { EditUserDto } from './dto/edit-users.dto';
 import { UsersService } from './users.service';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -28,8 +37,11 @@ export class UsersController {
   }
 
   @Get(':id/favorites')
-  getFavoritedArguments(@Param('id') userId: string) {
-    return this.usersService.getFavoritedArguments(userId);
+  getFavoritedArguments(
+    @Param('id') userId: string,
+    @Query() paginationDto: PaginationDto, // <-- ADICIONE ISTO
+  ) {
+    return this.usersService.getFavoritedArguments(userId, paginationDto);
   }
 
   @Get('top-contributors')

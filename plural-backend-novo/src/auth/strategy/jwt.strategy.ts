@@ -2,17 +2,21 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    config: ConfigService,
+    private prisma: PrismaService,
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false, // Garante que tokens expirados sejam rejeitados
-      secretOrKey: 'SUPER_SECRET_KEY',
+      secretOrKey: config.get('JWT_SECRET'),
     });
   }
 

@@ -12,9 +12,13 @@ import { ArticlesModule } from './articles/articles.module';
 import { AiModule } from './ai/ai.module';
 import { TrainingModule } from './training/training.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // Torna as variáveis de ambiente disponíveis globalmente
+    }),
     ScheduleModule.forRoot(),
     AuthModule,
     PrismaModule,

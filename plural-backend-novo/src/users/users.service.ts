@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-useless-escape */
 // Arquivo: src/users/users.service.ts
 import {
@@ -8,6 +10,7 @@ import {
 import { PrismaService } from '@/prisma/prisma.service';
 import { EditUserDto } from './dto/edit-users.dto';
 import { Prisma, FavoriteArgument, Argument, Topic } from '@prisma/client';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 // --- TIPOS PARA RETORNO ---
 type FavoriteWithArgumentDetails = FavoriteArgument & {
@@ -141,15 +144,19 @@ export class UsersService {
       },
     });
 
+    const allBadges = await this.prisma.badge.findMany();
+
     return {
       ...user,
       recentArguments,
+      allBadges,
     };
   }
 
-  async getFavoritedArguments(
-    userId: string,
-  ): Promise<FavoriteWithArgumentDetails[]> {
+  async getFavoritedArguments(userId: string, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
     const userExists = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -157,22 +164,30 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado.');
     }
 
-    return this.prisma.favoriteArgument.findMany({
+    const totalFavorites = await this.prisma.favoriteArgument.count({
+      where: { userId: userId },
+    });
+
+    const favorites = await this.prisma.favoriteArgument.findMany({
       where: { userId: userId },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
       include: {
         argument: {
           include: {
-            topic: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
+            topic: { select: { id: true, title: true } },
           },
         },
       },
     });
+
+    return {
+      data: favorites,
+      total: totalFavorites,
+      page,
+      lastPage: Math.ceil(totalFavorites / limit),
+    };
   }
 
   async getTopContributors() {

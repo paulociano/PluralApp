@@ -3,15 +3,22 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import api from '@/lib/api';
 import { useHeader } from '@/context/HeaderContext';
-import DebateGraph from '@/components/DebateGraph';
 import { useAuth } from '@/context/AuthContext';
-import { FiArrowLeft, FiPlus, FiChevronLeft, FiChevronRight, FiCpu, FiX } from 'react-icons/fi'; // Adicionados FiCpu e FiX
+import { FiArrowLeft, FiPlus, FiChevronLeft, FiChevronRight, FiCpu, FiX } from 'react-icons/fi';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import NewArgumentModal from '@/components/NewArgumentModal';
 import ArgumentPanel from '@/components/ArgumentPanel';
+import dynamic from 'next/dynamic';
 
-// Componente Wrapper para usar Suspense
+const DebateGraph = dynamic(
+  () => import('@/components/DebateGraph'),
+  { 
+    ssr: false,
+    loading: () => <p className="text-center">Carregando visualização do debate...</p> 
+  }
+);
+
 function TopicPageContent() {
   const { user } = useAuth();
   const params = useParams();
@@ -20,7 +27,6 @@ function TopicPageContent() {
   
   const { setIsTopicPage, setTopicActions } = useHeader();
 
-  // Estados da página
   const [topic, setTopic] = useState<any | null>(null);
   const [argumentsTree, setArgumentsTree] = useState<any[]>([]);
   const [isNewArgumentModalOpen, setIsNewArgumentModalOpen] = useState(false);
@@ -28,7 +34,7 @@ function TopicPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 1. Novos estados para o resumo da IA
+  // 1. Estados para o resumo da IA (reintroduzidos)
   const [summary, setSummary] = useState<string | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState('');
@@ -64,7 +70,7 @@ function TopicPageContent() {
     }
   }, [topicId, searchParams, currentPage]);
 
-  // 2. Handler para gerar o resumo
+  // 2. Lógica para gerar o resumo (reintroduzida)
   const handleGenerateSummary = async () => {
     setIsSummaryLoading(true);
     setSummary(null);
@@ -122,7 +128,7 @@ function TopicPageContent() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 flex-col">
-      {/* 4. Div para exibir o resultado do resumo */}
+      {/* 4. Div para exibir o resultado do resumo (reintroduzida) */}
       <div className="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-4">
         {summary && (
           <div className="relative p-4 bg-purple-50 border border-purple-200 rounded-lg">
@@ -138,7 +144,7 @@ function TopicPageContent() {
 
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 bg-white overflow-auto flex items-center justify-center relative">
-          <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-center text-lg font-bold text-[#2D4F5A] max-w-2xl px-4 font-lora">
+          <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-center text-lg font-bold text-[#2D4F5A] max-w-3xl px-4 font-lora">
             {topic?.title}
           </h1>
           <DebateGraph argumentsTree={argumentsTree} onNodeClick={setSelectedArgument} />

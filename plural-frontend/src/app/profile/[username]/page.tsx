@@ -1,7 +1,6 @@
-/* eslint-disable react/no-unescaped-entities */
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import api from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -25,8 +24,17 @@ type ArgumentoFavorito = {
   argument: Argumento;
 };
 
-type Badge = { id: string; name: string; description: string; icon: string; };
-type UserBadge = { id: string; badge: Badge; };
+type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+};
+
+type UserBadge = {
+  id: string;
+  badge: Badge;
+};
 
 type ProfileData = {
   id: string;
@@ -38,6 +46,7 @@ type ProfileData = {
   _count: { arguments: number; votes: number; };
   recentArguments: Argumento[];
   badges: UserBadge[];
+  allBadges?: Badge[]; // Opcional, para o "Empty State"
 };
 
 function ProfilePageContent() {
@@ -49,39 +58,66 @@ function ProfilePageContent() {
   const { setIsTopicPage, setTopicActions } = useHeader();
   
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [favorites, setFavorites] = useState<ArgumentoFavorito[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const [favorites, setFavorites] = useState<ArgumentoFavorito[]>([]);
+  const [favoritesPage, setFavoritesPage] = useState(1);
+  const [hasMoreFavorites, setHasMoreFavorites] = useState(true);
+  const [isFavoritesLoading, setIsFavoritesLoading] = useState(false);
+
   const fetchProfileData = useCallback(async () => {
     if (!username) return;
+
     setIsLoading(true);
+    setFavorites([]);
+    setFavoritesPage(1);
+    setHasMoreFavorites(true);
+
     try {
-      // 1. Busca os dados do perfil pelo username
       const profileResponse = await api.get(`/users/by-username/${username}`);
       const profileData: ProfileData = profileResponse.data;
       setProfile(profileData);
-      
-      // 2. Com o ID do perfil, busca os favoritos
-      if (profileData && profileData.id) {
-        const favoritesResponse = await api.get(`/users/${profileData.id}/favorites`);
-        setFavorites(favoritesResponse.data);
-      }
 
+      if (profileData && profileData.id) {
+        const favoritesResponse = await api.get(`/users/${profileData.id}/favorites?page=1&limit=10`);
+        setFavorites(favoritesResponse.data.data);
+        if (favoritesResponse.data.page >= favoritesResponse.data.lastPage) {
+          setHasMoreFavorites(false);
+        }
+      }
     } catch (error) {
       console.error("Erro ao buscar dados do perfil:", error);
-      setProfile(null); // Limpa o perfil em caso de erro (ex: 404)
+      setProfile(null);
     } finally {
       setIsLoading(false);
     }
   }, [username]);
-
-  // Efeito para buscar os dados quando o username mudar
+  
   useEffect(() => {
     fetchProfileData();
   }, [fetchProfileData]);
-  
-  // Efeito para controlar o Header
+
+  const handleLoadMoreFavorites = async () => {
+    if (!profile || isFavoritesLoading || !hasMoreFavorites) return;
+
+    const nextPage = favoritesPage + 1;
+    setIsFavoritesLoading(true);
+
+    try {
+      const response = await api.get(`/users/${profile.id}/favorites?page=${nextPage}&limit=10`);
+      setFavorites(prev => [...prev, ...response.data.data]);
+      setFavoritesPage(nextPage);
+      if (response.data.page >= response.data.lastPage) {
+        setHasMoreFavorites(false);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mais favoritos:", error);
+    } finally {
+      setIsFavoritesLoading(false);
+    }
+  };
+
   useEffect(() => {
     setIsTopicPage(true); 
     setTopicActions(
@@ -97,13 +133,12 @@ function ProfilePageContent() {
 
   const isOwnProfile = loggedInUser && loggedInUser.id === profile?.id;
 
-  if (isLoading) {
-    return <div className="text-center p-10 bg-white min-h-screen">Carregando perfil...</div>;
-  }
+  if (isLoading) return <div className="text-center p-10 bg-white min-h-screen">Carregando perfil...</div>;
+  if (!profile) return <div className="text-center p-10 bg-white min-h-screen">Perfil não encontrado.</div>;
 
-  if (!profile) {
-    return <div className="text-center p-10 bg-white min-h-screen">Perfil não encontrado.</div>;
-  }
+  const beginnerBadge = !profile.badges.length && profile.allBadges
+    ? profile.allBadges.find(b => b.name === 'Iniciante Curioso') 
+    : null;
 
   return (
     <>
@@ -163,6 +198,17 @@ function ProfilePageContent() {
                   </div>
                 ))}
               </div>
+            ) : beginnerBadge ? (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-6 rounded-lg text-center">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-3xl text-gray-400 mx-auto">
+                  <BadgeIcon iconName={beginnerBadge.icon} size={32} />
+                </div>
+                <h4 className="font-semibold mt-4">{beginnerBadge.name}</h4>
+                <p className="text-sm text-gray-500 mt-1 mb-4">{beginnerBadge.description}</p>
+                <Link href="/" className="px-4 py-2 bg-[#63A6A0] text-white text-sm font-semibold rounded-md hover:bg-[#2D4F5A]">
+                  Encontrar um debate
+                </Link>
+              </div>
             ) : (
               <p className="text-gray-500">Nenhuma conquista desbloqueada ainda.</p>
             )}
@@ -176,7 +222,7 @@ function ProfilePageContent() {
                   <div key={arg.id} className="p-4 border border-gray-200 rounded-lg bg-white flex items-start space-x-4 transition-shadow hover:shadow-md">
                     <FiMessageSquare className="text-[#2D4F5A] flex-shrink-0 mt-1" />
                     <div>
-                      <p className="text-sm text-gray-800 line-clamp-2">"{arg.content}"</p>
+                      <p className="font-manrope text-sm text-gray-800 line-clamp-2">"{arg.content}"</p>
                       <div className="text-xs text-gray-500 mt-2">
                         Em <Link href={`/topic/${arg.topic.id}?argumentId=${arg.id}`} className="font-semibold text-[#63A6A0] hover:underline">
                           {arg.topic.title}
@@ -194,24 +240,31 @@ function ProfilePageContent() {
           <section>
             <h2 className="font-lora text-2xl font-bold text-[#2D4F5A] mb-6">Argumentos Favoritos</h2>
             <div className="space-y-4">
-              {favorites.length > 0 ? (
-                favorites.map(fav => (
-                  <div key={fav.id} className="p-4 border border-gray-200 rounded-lg bg-white flex items-start space-x-4 transition-shadow hover:shadow-md">
-                    <FiBookmark className="text-yellow-500 flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="text-sm text-gray-800 line-clamp-2">"{fav.argument.content}"</p>
-                      <div className="text-xs text-gray-500 mt-2">
-                        No tópico <Link href={`/topic/${fav.argument.topic.id}?argumentId=${fav.argument.id}`} className="font-semibold text-[#63A6A0] hover:underline">
-                          {fav.argument.topic.title}
-                        </Link>
-                      </div>
+              {favorites.map(fav => (
+                <div key={fav.id} className="p-4 border border-gray-200 rounded-lg bg-white flex items-start space-x-4 transition-shadow hover:shadow-md">
+                  <FiBookmark className="text-yellow-500 flex-shrink-0 mt-1" />
+                  <div>
+                    <p className="font-manrope text-sm text-gray-800 line-clamp-2">"{fav.argument.content}"</p>
+                    <div className="text-xs text-gray-500 mt-2">
+                      No tópico <Link href={`/topic/${fav.argument.topic.id}?argumentId=${fav.argument.id}`} className="font-semibold text-[#63A6A0] hover:underline">
+                        {fav.argument.topic.title}
+                      </Link>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500">Nenhum argumento favoritado ainda.</p>
-              )}
+                </div>
+              ))}
             </div>
+            {isFavoritesLoading && <p className="text-center mt-4 text-sm text-gray-500">Carregando...</p>}
+            {hasMoreFavorites && !isFavoritesLoading && favorites.length > 0 && (
+              <div className="mt-6 text-center">
+                <button onClick={handleLoadMoreFavorites} className="px-4 py-2 bg-gray-100 rounded-md text-sm font-semibold hover:bg-gray-200">
+                  Carregar Mais
+                </button>
+              </div>
+            )}
+             {favorites.length === 0 && !isFavoritesLoading && (
+                <p className="text-gray-500 mt-4">Nenhum argumento favoritado ainda.</p>
+            )}
           </section>
         </div>
       </div>
@@ -227,7 +280,6 @@ function ProfilePageContent() {
   );
 }
 
-// O componente principal exportado usa Suspense para lidar com os hooks de navegação
 export default function ProfilePage() {
     return (
         <Suspense fallback={<div className="text-center p-10 bg-white min-h-screen">Carregando...</div>}>
