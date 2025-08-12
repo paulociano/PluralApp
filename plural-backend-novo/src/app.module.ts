@@ -11,9 +11,11 @@ import { AdminModule } from './admin/admin.module';
 import { ArticlesModule } from './articles/articles.module';
 import { AiModule } from './ai/ai.module';
 import { TrainingModule } from './training/training.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AuthModule,
     PrismaModule,
     DebateModule,

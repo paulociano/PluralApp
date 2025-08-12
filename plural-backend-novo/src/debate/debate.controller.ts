@@ -162,4 +162,9 @@ export class DebateController {
   suggestTopic(@GetUser('id') userId: string, @Body() dto: CreateTopicDto) { // Você precisará criar o CreateTopicDto
     return this.debateService.suggestTopic(userId, dto);
   }
+
+   @Get('topics/active')
+  getActiveTopics() {
+    return this.debateService.getActiveTopics();
+  }
 }

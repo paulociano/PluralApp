@@ -174,4 +174,24 @@ export class UsersService {
       },
     });
   }
+
+  async getTopContributors() {
+    return this.prisma.user.findMany({
+      where: {
+        email: {
+          not: 'mediador@plural.ai',
+        },
+      },
+      orderBy: {
+        points: 'desc',
+      },
+      take: 5, // Pega o Top 5
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        points: true,
+      },
+    });
+  }
 }

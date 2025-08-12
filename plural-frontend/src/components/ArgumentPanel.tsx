@@ -13,13 +13,13 @@ import {
   FiFlag,
   FiMessageSquare,
   FiLink,
+  FiCpu,
 } from 'react-icons/fi';
 import api from '@/lib/api';
 import ReplyForm from './ReplyForm';
 import ReportArgumentModal from './ReportArgumentModal';
 import Avatar from './Avatar';
 
-// Tipos
 type Argument = {
   id: string;
   content: string;
@@ -93,21 +93,16 @@ export default function ArgumentPanel({
     }
   };
 
-  // --- ALTERAÇÃO PRINCIPAL AQUI ---
   const handleReplySubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO', referenceUrl: string) => {
     if (!token || !localArgument) return;
     setIsSubmitting(true);
-
-    // Cria o objeto base com os dados obrigatórios
     const payload = { 
       content, 
       type, 
       topicId: localArgument.topicId, 
       parentArgumentId: localArgument.id,
-      // Usa um "spread condicional" para adicionar a referenceUrl SÓ SE ela não estiver vazia
       ...(referenceUrl.trim() && { referenceUrl }),
     };
-
     try {
       await api.post('/debate/argument', payload);
       onActionSuccess();
@@ -154,6 +149,8 @@ export default function ArgumentPanel({
     );
   }
 
+  const isAiModeratorPost = localArgument.author.id === process.env.NEXT_PUBLIC_AI_MODERATOR_ID;
+
   return (
     <>
       <div className="h-full bg-white shadow-lg flex flex-col border-l border-gray-200">
@@ -180,17 +177,30 @@ export default function ArgumentPanel({
           )}
           
           <div className="flex items-center space-x-3 mb-4">
-            <Avatar name={localArgument.author.name} size={32} />
-            <p className="font-semibold text-gray-800 font-manrope">
-              de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
-                {localArgument.author.name}
-              </Link>
-            </p>
+            {isAiModeratorPost ? (
+              <>
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                  <FiCpu className="text-purple-600" />
+                </div>
+                <p className="font-semibold text-purple-700 font-manrope">
+                  {localArgument.author.name}
+                </p>
+              </>
+            ) : (
+              <>
+                <Avatar name={localArgument.author.name} size={32} />
+                <p className="font-semibold text-gray-800 font-manrope">
+                  de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
+                    {localArgument.author.name}
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
 
-          <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg font-manrope">
+          <div className={`text-md text-gray-700 whitespace-pre-wrap p-4 rounded-lg font-manrope ${isAiModeratorPost ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'}`}>
             {localArgument.content}
-          </p>
+          </div>
 
           {localArgument.referenceUrl && (
             <div className="mt-4">

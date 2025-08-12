@@ -27,9 +27,13 @@ export class UsersController {
     return this.usersService.getUserProfileByUsername(username);
   }
 
-  // --- ESTE ENDPOINT PROVAVELMENTE ESTÁ FALTANDO ---
   @Get(':id/favorites')
   getFavoritedArguments(@Param('id') userId: string) {
     return this.usersService.getFavoritedArguments(userId);
+  }
+
+  @Get('top-contributors')
+  getTopContributors() {
+    return this.usersService.getTopContributors();
   }
 }

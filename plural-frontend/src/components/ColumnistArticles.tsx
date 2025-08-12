@@ -4,6 +4,7 @@ import api from '@/lib/api';
 import Avatar from './Avatar';
 import Link from 'next/link';
 import TrainingTeaser from './TrainingTeaser';
+import TopContributors from './TopContributors';
 
 // Tipo para os dados do artigo
 type Article = {
@@ -44,7 +45,7 @@ export default function ColumnistArticles() {
   if (isLoading) {
     return (
       <aside className="w-full lg:w-72 bg-white p-6 lg:min-h-screen border-r border-gray-200">
-        <h2 className="font-lora font-bold text-lg text-gray-800 mb-4">Artigos da Plural</h2>
+        <h2 className="font-lora font-bold text-lg text-[#2D4F5A] mb-4">Artigos da Plural</h2>
         <p className="font-manrope">Carregando artigos...</p>
       </aside>
     );
@@ -52,7 +53,7 @@ export default function ColumnistArticles() {
 
   return (
     <aside className="w-full lg:w-72 bg-white p-6 lg:min-h-screen border-r border-gray-200">
-      <h2 className="font-lora font-bold text-lg text-gray-800 mb-4">Artigos da Plural</h2>
+      <h2 className="font-lora font-bold text-lg text-[#2D4F5A] mb-4">Artigos da Plural</h2>
       <div className="space-y-8">
         {articles.map(article => (
           <article key={article.id}>
@@ -78,7 +79,8 @@ export default function ColumnistArticles() {
           </article>
         ))}
       </div>
-       <TrainingTeaser />
+      <TrainingTeaser />
+      <TopContributors />
     </aside>
   );
 }

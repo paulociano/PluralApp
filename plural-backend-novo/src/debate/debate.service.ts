@@ -124,6 +124,27 @@ export class DebateService {
     });
   }
 
+  async getActiveTopics() {
+    // Busca os 4 argumentos mais recentes que pertencem a tópicos diferentes
+    const recentArguments = await this.prisma.argument.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      distinct: ['topicId'],
+      take: 4,
+      include: {
+        topic: { // Inclui os dados completos do tópico associado
+          include: {
+            _count: { select: { arguments: true } },
+          },
+        },
+      },
+    });
+
+    // Retorna apenas os dados dos tópicos
+    return recentArguments.map(arg => arg.topic);
+  }
+
   async getFavoriteStatus(userId: string, argumentId: string) {
     const favorite = await this.prisma.favoriteArgument.findUnique({
       where: {

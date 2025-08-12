@@ -50,6 +50,21 @@ async function main() {
   });
   console.log('Artigos semeados.');
 
+   // --- CRIAÇÃO DO USUÁRIO IA MEDIADOR ---
+  const aiModerator = await prisma.user.upsert({
+    where: { email: 'mediador@plural.ai' },
+    update: {},
+    create: {
+      id: 'cl9z9z9z90000z9z9z9z9z9z9', // ID fixo para fácil referência
+      email: 'mediador@plural.ai',
+      password: '', // Senha não é necessária, pois não fará login
+      name: 'MedIAdor Plural',
+      username: 'mediador-plural',
+      role: 'ADMIN', // É importante que a IA tenha um role elevado
+    },
+  });
+  console.log(`Usuário MedIAdor criado/verificado: ${aiModerator.email}`);
+
   console.log('Seeding finished.');
 }
 

@@ -115,7 +115,6 @@ export default function HomePage() {
               )}
             </div>
           </main>
-
           <TrendingTopics topics={trendingTopics} />
         </div>
       </div>

@@ -156,6 +156,7 @@ model Article {
   authorImageUrl String?
   published      Boolean  @default(false)
   createdAt      DateTime @default(now())
+  summary        String
 }
 
 model FallacyType {
