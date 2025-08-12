@@ -78,7 +78,20 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mt-4 border-t pt-4 space-y-4">
       <h4 className="font-semibold text-gray-800">Sua Resposta</h4>
-      
+      <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input type="radio" name="replyType" value="PRO" checked={type === 'PRO'} onChange={() => setType('PRO')} className="form-radio text-green-600"/>
+            <span className="ml-2 text-sm text-gray-700">Pró</span>
+          </label>
+          <label className="flex items-center">
+            <input type="radio" name="replyType" value="CONTRA" checked={type === 'CONTRA'} onChange={() => setType('CONTRA')} className="form-radio text-red-600"/>
+            <span className="ml-2 text-sm text-gray-700">Contra</span>
+          </label>
+          <label className="flex items-center">
+            <input type="radio" name="replyType" value="NEUTRO" checked={type === 'NEUTRO'} onChange={() => setType('NEUTRO')} className="form-radio text-gray-600"/>
+            <span className="ml-2 text-sm text-gray-700">Neutro</span>
+          </label>
+        </div>
       {/* Área de Texto para o Argumento */}
       <div>
         <textarea
@@ -88,6 +101,21 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
           rows={4}
           placeholder="Escreva sua resposta..."
           required
+        />
+      </div>
+      
+      {/* Campo de Referência Opcional */}
+      <div>
+        <label htmlFor="reference" className="block text-sm font-medium text-gray-700">
+          Link de Referência (Opcional)
+        </label>
+        <input
+          type="url"
+          id="reference"
+          value={referenceUrl}
+          onChange={(e) => setReferenceUrl(e.target.value)}
+          placeholder="https://exemplo.com/fonte"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
         />
       </div>
 
@@ -106,39 +134,9 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
         {analysisError && <p className="text-red-500 text-sm mt-2">{analysisError}</p>}
       </div>
       
-      {/* Campo de Referência Opcional */}
-      <div>
-        <label htmlFor="reference" className="block text-sm font-medium text-gray-700">
-          Link de Referência (Opcional)
-        </label>
-        <input
-          type="url"
-          id="reference"
-          value={referenceUrl}
-          onChange={(e) => setReferenceUrl(e.target.value)}
-          placeholder="https://exemplo.com/fonte"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-        />
-      </div>
-      
       {/* Seleção de Tipo e Botão de Envio */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input type="radio" name="replyType" value="PRO" checked={type === 'PRO'} onChange={() => setType('PRO')} className="form-radio text-green-600"/>
-            <span className="ml-2 text-sm text-gray-700">Pró</span>
-          </label>
-          <label className="flex items-center">
-            <input type="radio" name="replyType" value="CONTRA" checked={type === 'CONTRA'} onChange={() => setType('CONTRA')} className="form-radio text-red-600"/>
-            <span className="ml-2 text-sm text-gray-700">Contra</span>
-          </label>
-          <label className="flex items-center">
-            <input type="radio" name="replyType" value="NEUTRO" checked={type === 'NEUTRO'} onChange={() => setType('NEUTRO')} className="form-radio text-gray-600"/>
-            <span className="ml-2 text-sm text-gray-700">Neutro</span>
-          </label>
-        </div>
-        
-        <Button type="submit" className="w-auto" disabled={isSubmitting || isAnalyzing}>
+        <Button type="submit" className="w-50%" disabled={isSubmitting || isAnalyzing}>
           {isSubmitting ? 'Enviando...' : 'Enviar'}
         </Button>
       </div>

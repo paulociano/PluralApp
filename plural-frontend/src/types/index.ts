@@ -55,6 +55,7 @@ export type Argumento = {
   topicId: string;
   parentArgumentId: string | null;
   type: 'PRO' | 'CONTRA' | 'NEUTRO';
+  replies?: Argumento[]; 
 };
 
 export type ArgumentoFavorito = {
@@ -129,7 +130,10 @@ export type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  title: string;
+  children: React.ReactNode;
   articleToEdit: Article | null;
+  maxWidth?: 'max-w-lg' | 'max-w-2xl' | 'max-w-3xl';
 };
 
 export type AvatarProps = {
@@ -221,3 +225,4 @@ export type TopicGridCardProps = {
 export type TrendingTopicsProps = {
   topics: Topic[];
 };
+

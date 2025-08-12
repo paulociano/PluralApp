@@ -13,14 +13,13 @@ import {
   FiFlag,
   FiMessageSquare,
   FiLink,
-  FiCpu,
 } from 'react-icons/fi';
 import api from '@/lib/api';
 import ReplyForm from './ReplyForm';
 import ReportArgumentModal from './ReportArgumentModal';
 import Avatar from './Avatar';
 import { motion } from 'framer-motion';
-import { Argument, ArgumentPanelProps } from '@/types';
+import { Argumento, ArgumentPanelProps } from '@/types';
 
 export default function ArgumentPanel({
   argument,
@@ -29,9 +28,9 @@ export default function ArgumentPanel({
   onSelectArgument,
 }: ArgumentPanelProps) {
   const { user, token } = useAuth();
-  const [localArgument, setLocalArgument] = useState<Argument | null>(argument);
+  const [localArgument, setLocalArgument] = useState<Argumento | null>(argument);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ancestors, setAncestors] = useState<Argument[]>([]);
+  const [ancestors, setAncestors] = useState<Argumento[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isRepliesCollapsed, setIsRepliesCollapsed] = useState(true);
@@ -132,14 +131,12 @@ export default function ArgumentPanel({
     );
   }
 
-  const isAiModeratorPost = localArgument.author.id === process.env.NEXT_PUBLIC_AI_MODERATOR_ID;
-
   return (
     <>
       <div className="h-full bg-white shadow-lg flex flex-col border-l border-gray-200">
         <div className="p-4 border-b flex justify-between items-center bg-gray-50 shrink-0">
           <h3 className="font-lora text-lg font-semibold text-gray-800">Detalhes do Argumento</h3>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 transition-colors" aria-label="Fechar painel de detalhes">
             <FiX className="w-6 h-6 text-gray-600" />
           </button>
         </div>
@@ -160,30 +157,17 @@ export default function ArgumentPanel({
           )}
           
           <div className="flex items-center space-x-3 mb-4">
-            {isAiModeratorPost ? (
-              <>
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                  <FiCpu className="text-purple-600" />
-                </div>
-                <p className="font-semibold text-purple-700 font-manrope">
-                  {localArgument.author.name}
-                </p>
-              </>
-            ) : (
-              <>
-                <Avatar name={localArgument.author.name} size={32} />
-                <p className="font-semibold text-gray-800 font-manrope">
-                  de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
-                    {localArgument.author.name}
-                  </Link>
-                </p>
-              </>
-            )}
+            <Avatar name={localArgument.author.name} size={32} />
+            <p className="font-semibold text-gray-800 font-manrope">
+              de: <Link href={`/profile/${localArgument.author.username || localArgument.author.id}`} className="text-[#63A6A0] hover:underline">
+                {localArgument.author.name}
+              </Link>
+            </p>
           </div>
 
-          <div className={`text-md text-gray-700 whitespace-pre-wrap p-4 rounded-lg font-manrope ${isAiModeratorPost ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'}`}>
+          <p className="text-md text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg font-manrope">
             {localArgument.content}
-          </div>
+          </p>
 
           {localArgument.referenceUrl && (
             <div className="mt-4">
@@ -200,9 +184,10 @@ export default function ArgumentPanel({
           )}
 
           <div className="mt-6">
-            <div
-              className="p-2 -mx-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+            <button
               onClick={toggleRepliesVisibility}
+              className="w-full p-2 -mx-2 rounded-md hover:bg-gray-100 transition-colors text-left"
+              aria-expanded={!isRepliesCollapsed}
             >
               <div className="flex items-center text-sm text-gray-600">
                 <FiMessageSquare className="w-4 h-4 mr-2" />
@@ -211,7 +196,7 @@ export default function ArgumentPanel({
                   {isRepliesCollapsed ? 'Mostrar' : 'Esconder'}
                 </span>
               </div>
-            </div>
+            </button>
             
             {!isRepliesCollapsed && user && (
               <div className="mt-2">
@@ -232,7 +217,8 @@ export default function ArgumentPanel({
               >
                 <FiArrowUp className="w-5 h-5 text-green-600" />
               </motion.button>
-               <motion.span
+              
+              <motion.span
                 key={localArgument.votesCount}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -241,7 +227,8 @@ export default function ArgumentPanel({
               >
                 {localArgument.votesCount}
               </motion.span>
-               <motion.button
+
+              <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => handleVote('DOWNVOTE')}
                 className="p-1 rounded-full hover:bg-red-100"
@@ -251,10 +238,10 @@ export default function ArgumentPanel({
               </motion.button>
             </div>
             <div className="flex items-center space-x-3">
-              <button onClick={handleToggleFavorite} className="text-gray-400 hover:text-[#63A6A0] transition-colors" aria-label={isFavorited ? 'Desfavoritar argumento' : 'Favoritar argumento'}>
+              <button onClick={handleToggleFavorite} className="text-gray-400 hover:text-[#63A6A0] transition-colors" aria-label={isFavorited ? 'Remover dos favoritos' : 'Salvar nos favoritos'}>
                 <FiBookmark className={`w-5 h-5 ${isFavorited ? 'fill-current text-[#63A6A0]' : ''}`} />
               </button>
-              <button onClick={() => setIsReportModalOpen(true)} className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Denunciar argumento">
+              <button onClick={() => setIsReportModalOpen(true)} className="text-gray-400 hover:text-red-500 transition-colors" aria-label="Denunciar este argumento">
                 <FiFlag className="w-5 h-5" />
               </button>
             </div>
