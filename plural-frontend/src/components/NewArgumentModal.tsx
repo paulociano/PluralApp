@@ -1,74 +1,40 @@
-// Arquivo: src/components/NewArgumentModal.tsx
 'use client';
 
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import axios from 'axios';
-import ReplyForm from './ReplyForm'; // Reutilizamos o formulário
+import api from '@/lib/api';
+import ReplyForm from './ReplyForm';
 import { NewArgumentModalProps } from '@/types';
 
-export default function NewArgumentModal({
-  isOpen,
-  onClose,
-  topicId,
-  onSuccess,
-}: NewArgumentModalProps) {
+export default function NewArgumentModal({ isOpen, onClose, topicId, onSuccess }: NewArgumentModalProps) {
   const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (content: string, type: 'PRO' | 'CONTRA') => {
-    if (!token || !topicId) {
-      alert('Erro: Tópico não encontrado ou usuário não autenticado.');
-      return;
-    }
+  const handleSubmit = async (content: string, type: 'PRO' | 'CONTRA' | 'NEUTRO', referenceUrl: string) => {
+    if (!token || !topicId) return;
     setIsSubmitting(true);
     try {
-      // A lógica de envio não passa um 'parentArgumentId'
-      await axios.post(
-        'http://localhost:3000/api/debate/argument',
-        {
-          content,
-          type,
-          topicId: topicId,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Erro ao criar argumento:', error);
-      alert('Não foi possível criar seu argumento.');
-    } finally {
-      setIsSubmitting(false);
-    }
+      await api.post('/debate/argument', { content, type, topicId, ...(referenceUrl.trim() && { referenceUrl }) });
+      onSuccess(); onClose();
+    } catch (error) { console.error('Erro ao criar argumento:', error); }
+    finally { setIsSubmitting(false); }
   };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-30" onClose={onClose}>
-        {/* Backdrop */}
-        <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <div className="fixed inset-0  bg-white bg-opacity-75 backdrop-blur-sm" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 border-b pb-2">
-                  Criar Novo Argumento
-                </Dialog.Title>
-
-                <div className="mt-4">
-                  <ReplyForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
+        <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"><div className="fixed inset-0 bg-[#173B44]/35 backdrop-blur-sm" /></Transition.Child>
+        <div className="fixed inset-0 overflow-y-auto"><div className="flex min-h-full items-center justify-center p-4">
+          <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
+            <Dialog.Panel className="w-full max-w-xl overflow-hidden rounded-2xl border border-[#DDD7CC] bg-white p-6 text-left shadow-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6E8F8D]">Entre na conversa</p>
+              <Dialog.Title as="h3" className="mt-1 font-lora text-2xl font-bold text-[#173B44]">Criar novo argumento</Dialog.Title>
+              <p className="mt-2 text-sm leading-6 text-[#748084]">Declare sua posição, desenvolva o raciocínio e, quando possível, acrescente uma fonte.</p>
+              <ReplyForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+            </Dialog.Panel>
+          </Transition.Child>
+        </div></div>
       </Dialog>
     </Transition>
   );
