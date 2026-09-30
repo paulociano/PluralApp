@@ -10,14 +10,14 @@ import { ReplyFormProps, ArgumentAnalysis } from '@/types';
 const AnalysisResult = ({ analysis }: { analysis: ArgumentAnalysis }) => {
     // Função para mapear a pontuação para uma cor de barra de progresso
     const getScoreColor = (score: number) => {
-        if (score <= 4) return 'bg-red-500';
-        if (score <= 7) return 'bg-yellow-500';
-        return 'bg-green-500';
+        if (score <= 4) return 'bg-[#D16C4B]';
+        if (score <= 7) return 'bg-[#C59A55]';
+        return 'bg-[#5E9893]';
     };
 
     return (
-        <div className="mt-4 p-4 border rounded-lg bg-gray-50 space-y-3">
-            <h5 className="font-semibold text-sm text-gray-800">Análise da IA</h5>
+        <div className="mt-4 space-y-3 rounded-xl border border-[#D8D2C7] bg-[#F8F6F1] p-4">
+            <h5 className="font-lora text-base font-bold text-[#173B44]">Análise da IA</h5>
             {Object.entries(analysis).map(([key, value]) => (
                 <div key={key}>
                     <div className="flex justify-between items-center mb-1">
@@ -76,8 +76,8 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 border-t pt-4 space-y-4">
-      <h4 className="font-semibold text-gray-800">Sua Resposta</h4>
+    <form onSubmit={handleSubmit} className="mt-5 space-y-4 border-t border-[#E7E2D9] pt-5">
+      <h4 className="font-lora text-lg font-bold text-[#173B44]">Sua Resposta</h4>
       <div className="flex items-center space-x-4">
           <label className="flex items-center">
             <input type="radio" name="replyType" value="PRO" checked={type === 'PRO'} onChange={() => setType('PRO')} className="form-radio text-green-600"/>
@@ -97,7 +97,7 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="font-manrope text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#63A6A0]"
+          className="w-full rounded-xl border border-[#D8D2C7] bg-[#FBFAF7] px-3 py-3 text-sm leading-6 text-[#45555A] outline-none transition focus:border-[#5E9893] focus:ring-2 focus:ring-[#5E9893]/15"
           rows={4}
           placeholder="Escreva sua resposta..."
           required
@@ -115,7 +115,7 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
           value={referenceUrl}
           onChange={(e) => setReferenceUrl(e.target.value)}
           placeholder="https://exemplo.com/fonte"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          className="mt-1 block w-full rounded-xl border border-[#D8D2C7] bg-[#FBFAF7] px-3 py-2.5 text-sm text-[#45555A] outline-none focus:border-[#5E9893] focus:ring-2 focus:ring-[#5E9893]/15"
         />
       </div>
 
@@ -125,7 +125,7 @@ export default function ReplyForm({ onSubmit, isSubmitting }: ReplyFormProps) {
           type="button"
           onClick={handleAnalyze}
           disabled={isAnalyzing || isSubmitting}
-          className="flex items-center gap-2 text-sm px-3 py-1.5 border rounded-md text-purple-700 border-purple-300 hover:bg-purple-50 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 rounded-xl border border-[#B9CCC9] px-3 py-2 text-sm font-semibold text-[#447D77] transition hover:bg-[#F1F8F6] disabled:opacity-50"
         >
           <FiCpu />
           {isAnalyzing ? 'Analisando...' : 'Analisar com IA'}
