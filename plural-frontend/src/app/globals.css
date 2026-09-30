@@ -1,49 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Manrope:wght@300..800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #ffffff;
+  --background: #f4f2ec;
+  --foreground: #253238;
+  --brand-ink: #173b44;
+  --brand-teal: #5e9893;
+  --brand-rust: #d16c4b;
+  --paper: #ffffff;
+  --line: #ddd7cc;
 }
 
-:root {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-/* ---- ADICIONE ESTA REGRA DE TESTE AQUI ---- */
-h1, h2, h3 {
-  font-family: 'Lora', serif !important;
+html {
+  background: var(--background);
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family:'Manrope'
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Estilos para o editor Tiptap */
+h1, h2, h3 {
+  font-family: 'Lora', serif;
+}
+
+button, a, input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(94, 152, 147, 0.24);
+  color: var(--brand-ink);
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #adb5bd;
+  color: #8b9497;
   pointer-events: none;
   height: 0;
 }
 
-/* Estilo para o botão ativo na toolbar do Tiptap */
 .is-active {
-  background-color: #e9ecef;
-  font-weight: bold;
-  border-radius: 4px;
+  background-color: #ece8df;
+  font-weight: 700;
+  border-radius: 8px;
 }
